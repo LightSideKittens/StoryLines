@@ -1,0 +1,16 @@
+{
+    "name": "LSCore.Editor.HarmonyPatchers",
+    "rootNamespace": "",
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false,
+    "references":[ "GUID:3dd2cb52eff6e5743bdb8fcc64baed91" ]
+}

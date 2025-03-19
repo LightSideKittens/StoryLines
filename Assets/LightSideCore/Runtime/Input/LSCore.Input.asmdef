@@ -1,0 +1,17 @@
+{
+    "name": "LSCore.Input",
+    "rootNamespace": "",
+    "references": [
+        "GUID:e2d262c07fab33347bf583c077610e88",
+        "GUID:e459b463d83745848ea2169051a1c68a",
+        "GUID:e203c3ad7a7046548ca22a43fa4eb0de"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
