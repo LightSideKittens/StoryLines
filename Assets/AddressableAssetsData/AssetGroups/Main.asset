@@ -15,18 +15,8 @@ MonoBehaviour:
   m_GroupName: Main
   m_GUID: afd6c21c5db430540a409a132a6eaed9
   m_SerializeEntries:
-  - m_GUID: 2cda990e2423bbf4892e6590ba056729
-    m_Address: Battle
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d11414f9bff75154fbdb11bc06ebe918
     m_Address: Forest
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: f5c951e641acb8e4bb73e0936ef5eaaa
-    m_Address: Castle_RaidConfig_1
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

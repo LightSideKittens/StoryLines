@@ -104,7 +104,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b6f38a82f2e436e8f2d84f81b34af2b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fadeSpeed: 0.2
+  initShowHideAnim: 0
+  showHideAnim:
+    rid: 1000
+  onShowing: []
+  onHiding: []
+  onShowed: []
+  onHidden: []
+  references:
+    version: 2
+    RefIds:
+    - rid: 1000
+      type: {class: DefaultUIViewAnimation, ns: LSCore, asm: LSCore.UIModule}
+      data:
+        canvasGroup: {fileID: 3474029696286245794}
+        duration: 0.2
 --- !u!114 &2974303695684339932
 MonoBehaviour:
   m_ObjectHideFlags: 0

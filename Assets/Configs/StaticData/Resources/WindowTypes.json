@@ -1,1 +1,1 @@
-{"types":["LSCore.DaddyCanvas, LSCore.WindowModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"]}
+{"types":["ErrorScreen, Common, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","LoadingScreen, Common, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","StoryWindow, StoryWorkshop, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","LSCore.DaddyCanvas, LSCore.WindowModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"]}
