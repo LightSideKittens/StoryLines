@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using LSCore;
+using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -13,16 +14,18 @@ namespace StoryWorkshop
     public class LoadSceneAction : BaseStoryAction
     {
         public LSAssetReference sceneRef;
-        [SerializeReference] public List<LSAction> onSuccess = new();
+        [HideIf("HideOnSuccessActions")] [SerializeReference] public List<LSAction> onSuccess = new();
         
         private SceneInstance sceneInstance;
         private static AsyncOperationHandle<SceneInstance> handler;
         private static SceneInstance currentScene;
         private static Dictionary<LSAssetReference, SceneInstance> scenes = new();
-        private static LinkedList<(LSAssetReference, SceneInstance)> scenesList = new();
+        private static LinkedList<LoadSceneAction> scenesList = new();
         
         
 #if UNITY_EDITOR
+
+        protected virtual bool HideOnSuccessActions => false;
         static LoadSceneAction()
         {
             World.Creating += () =>
@@ -76,17 +79,17 @@ namespace StoryWorkshop
                 {
                     if (StoryBranch.IsNext)
                     {
-                        scenesList.AddLast((sceneRef, currentScene));
+                        scenesList.AddLast(this);
                     }
                     else
                     {
-                        scenesList.AddFirst((sceneRef, currentScene));
+                        scenesList.AddFirst(this);
                     }
                 }
                 
                 if (scenes.Count > 3)
                 {
-                    (LSAssetReference, SceneInstance) value;
+                    LoadSceneAction value;
                     if (StoryBranch.IsNext)
                     {
                         value = scenesList.First.Value;
@@ -97,9 +100,10 @@ namespace StoryWorkshop
                         value = scenesList.Last.Value;
                         scenesList.RemoveLast();
                     }
-                    
-                    Addressables.UnloadSceneAsync(value.Item2);
-                    scenes.Remove(value.Item1);
+
+                    StoryWorld.RemoveAction(value.Hash);
+                    Addressables.UnloadSceneAsync(value.sceneInstance);
+                    scenes.Remove(value.sceneRef);
                 }
 
                 onSuccess?.Invoke();

@@ -349,39 +349,58 @@ MonoBehaviour:
     data:
     - key: SayaBranch_1
       value:
-        m_AssetGUID: 90e22592787d561488439dccc5c46f89
-        m_SubObjectName: 
-        m_SubObjectGUID: 
-        m_SubObjectType: 
-        m_EditorAssetChanged: 1
+        id: a8f3e9401cfc4ba9a93af01b35bfa2ab
+        sceneRef:
+          m_AssetGUID: 90e22592787d561488439dccc5c46f89
+          m_SubObjectName: 
+          m_SubObjectGUID: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 1
+        onSuccess: []
     - key: Saya_ChooseAnotherBranch
       value:
-        m_AssetGUID: 90e22592787d561488439dccc5c46f89
-        m_SubObjectName: 
-        m_SubObjectGUID: 
-        m_SubObjectType: 
-        m_EditorAssetChanged: 1
+        id: 2a1d3c12ef794ac7b9c153c41041bdb5
+        sceneRef:
+          m_AssetGUID: 90e22592787d561488439dccc5c46f89
+          m_SubObjectName: 
+          m_SubObjectGUID: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 1
+        onSuccess: []
     - key: AuraBranch_1
       value:
-        m_AssetGUID: 0e6a8b3cab659ec48ba87baa38e34ce2
-        m_SubObjectName: 
-        m_SubObjectGUID: 
-        m_SubObjectType: 
-        m_EditorAssetChanged: 0
+        id: a59bc90c10b84fb2a5dd27ab9a71db6a
+        sceneRef:
+          m_AssetGUID: 0e6a8b3cab659ec48ba87baa38e34ce2
+          m_SubObjectName: 
+          m_SubObjectGUID: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 1
+        onSuccess: []
     - key: JackBranch_1
       value:
-        m_AssetGUID: 4937a3b3906ac0b4a97398d49a8a651a
-        m_SubObjectName: 
-        m_SubObjectGUID: 
-        m_SubObjectType: 
-        m_EditorAssetChanged: 0
+        id: 0b301b2435ee43f195621082736bd064
+        sceneRef:
+          m_AssetGUID: 4937a3b3906ac0b4a97398d49a8a651a
+          m_SubObjectName: 
+          m_SubObjectGUID: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 1
+        onSuccess: []
     - key: FoxyBranch_1
       value:
-        m_AssetGUID: 9c26a330170b0594db5b4211bfe233d1
-        m_SubObjectName: 
-        m_SubObjectGUID: 
-        m_SubObjectType: 
-        m_EditorAssetChanged: 0
+        id: e2cc4e65519c43a29a01ec5c0acb0686
+        sceneRef:
+          m_AssetGUID: 9c26a330170b0594db5b4211bfe233d1
+          m_SubObjectName: 
+          m_SubObjectGUID: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 1
+        onSuccess: []
+  branches: {fileID: 1754515565}
+  references:
+    version: 2
+    RefIds: []
 --- !u!4 &1275711719
 Transform:
   m_ObjectHideFlags: 0
@@ -610,7 +629,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1754515566
 Transform:
   m_ObjectHideFlags: 0

@@ -60,15 +60,9 @@ namespace StoryWorkshop
         }
 
         public virtual int Hash => GetType().FullName!.GetHashCode();
+        public void InitId() => id ??= Guid.NewGuid().ToString("N");
         
-        void ISerializationCallbackReceiver.OnBeforeSerialize()
-        {
-            id ??= Guid.NewGuid().ToString("N");
-        }
-
-        void ISerializationCallbackReceiver.OnAfterDeserialize()
-        {
-            actionById[id] = this;
-        }
+        void ISerializationCallbackReceiver.OnBeforeSerialize() => InitId();
+        void ISerializationCallbackReceiver.OnAfterDeserialize() => actionById[id] = this;
     }
 }

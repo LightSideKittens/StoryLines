@@ -25,9 +25,9 @@ namespace StoryWorkshop
 
         private void SetBranch(string id, SetBranchAction backAction)
         {
-            if (StoryWorld.SceneByBranchId.TryGetValue(id, out var sceneRef))
+            if (StoryWorld.SceneByBranchId.TryGetValue(id, out var loadSceneAction))
             {
-                var loadSceneAction = new LoadSceneAction() {sceneRef = sceneRef};
+                loadSceneAction.InitId();
                 loadSceneAction.onSuccess.Add((DelegateLSAction)Set);
                 loadSceneAction.Invoke();
                 return;

@@ -1,27 +1,49 @@
-﻿using LSCore;
+﻿using System;
+using LSCore;
+using LSCore.Attributes;
 using LSCore.ConfigModule;
 using LSCore.DataStructs;
 using Newtonsoft.Json.Linq;
+using StoryWorkshop;
+using UnityEngine;
 
 public class StoryWorld : ServiceManager
 {
+    [Unwrap]
+    [Serializable]
+    public class LoadScene : LoadSceneAction
+    {
+#if UNITY_EDITOR
+        protected override bool HideOnSuccessActions => true;
+#endif
+
+        public override int Hash => HashCode.Combine(typeof(LoadSceneAction).FullName!.GetHashCode(), sceneRef.GetHashCode());
+    }
+    
     public string configName;
 
     public static JToken Config => JTokenGameConfig.Get(Instance.configName);
     
-    public UniDict<string, LSAssetReference> sceneByBranchId;
-    public static UniDict<string, LSAssetReference> SceneByBranchId => Instance.sceneByBranchId;
+    public UniDict<string, LoadScene> sceneByBranchId;
+    public static UniDict<string, LoadScene> SceneByBranchId => Instance.sceneByBranchId;
     private static StoryWorld Instance { get; set; }
+
+    [SerializeField] private GameObject branches;
 
     protected override void Awake()
     {
         base.Awake();
         Instance = this;
+        branches.SetActive(true);
     }
 
     private void Start()
     {
         StoryWindow.Show();
+        foreach (var loadScene in sceneByBranchId.Values)
+        {
+            loadScene.Preload();
+        }
     }
 
     public static void SetAction(int actionHash, string actionId)
