@@ -1,11 +1,9 @@
 ﻿using System.Collections.Generic;
 using LSCore;
-using StoryWorkshop;
 using UnityEngine;
 
 public class StoryWindow : BaseWindow<StoryWindow>
 {
-    public SetBranchAction startBranchAction;
     public LSText text;
     public RectTransform contentParent;
     public LSButton buttonPrefab;
@@ -24,11 +22,6 @@ public class StoryWindow : BaseWindow<StoryWindow>
     private void Start()
     {
         backButton.Clicked += StoryBranch.Back;
-        
-        if (!StoryBranch.TryLoadFromConfig())
-        {
-            startBranchAction?.Invoke();
-        }
     }
     
     public static void SetText(string text)

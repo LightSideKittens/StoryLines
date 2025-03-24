@@ -53,6 +53,12 @@ namespace StoryWorkshop
 
         protected override void OnInvoke()
         {
+            if (handler.IsValid())
+            {
+                handler.OnComplete(OnInvoke);
+                return;
+            }
+            
             if (scenes.ContainsKey(sceneRef))
             {
                 onSuccess?.Invoke();

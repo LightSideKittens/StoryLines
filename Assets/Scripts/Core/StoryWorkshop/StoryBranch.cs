@@ -13,7 +13,8 @@ public class StoryBranch : MonoBehaviour
     {
         [SerializeReference] public List<BaseStoryAction> onEnter;
         [SerializeReference] public List<BaseStoryAction> onNext;
-
+        [NonSerialized] public string branchId;
+        
         public void OnNext()
         {
             onNext.Invoke();
@@ -36,11 +37,13 @@ public class StoryBranch : MonoBehaviour
         {
             foreach (var action in onEnter)
             {
+                action.branchId = branchId;
                 action.Preload();
             }
             
             foreach (var action in onNext)
             {
+                action.branchId = branchId;
                 action.Preload();
             }
         }
@@ -126,9 +129,13 @@ public class StoryBranch : MonoBehaviour
 
     private void SaveBranchData()
     {
-        var data = (JObject)(StoryWorld.Config["branchesData"] ??= new JObject());
-        var entry = (JObject)(data[id] ??= new JObject());
-        entry["backActionId"] = backAction.id;
+        var data = StoryWorld.GetJObject("branchesData");
+        var entry = data.GetOrCreate<JObject>(id);
+        entry["backAction"] = new JObject()
+        {
+            {"branchId", backAction.branchId},
+            {"lastBranchId", backAction.lastBranchId},
+        };
         entry["currentIndex"] = CurrentIndex;
     }
 
@@ -143,12 +150,17 @@ public class StoryBranch : MonoBehaviour
         var entry = data?[id];
         if (entry != null)
         {
-            var backActionId = entry["backActionId"]?.ToString();
-            if (backActionId != null)
+            var backActionJToken = entry["backAction"];
+            if (backActionJToken != null)
             {
                 if (backAction == null)
                 {
-                    backAction = (SetBranchAction)BaseStoryAction.actionById[backActionId];
+                    backAction = new SetBranchAction()
+                    {
+                        branchId = backActionJToken["branchId"]!.ToString(),
+                        lastBranchId = backActionJToken["lastBranchId"]?.ToString(),
+                    };
+                    backAction.id = string.Empty;
                     backAction.Preload();
                 }
             }
@@ -178,6 +190,7 @@ public class StoryBranch : MonoBehaviour
         branchById[id] = this;
         foreach (var step in steps)
         {
+            step.branchId = id;
             step.Preload();
         }
     }
@@ -217,15 +230,18 @@ public class StoryBranch : MonoBehaviour
     private void Internal_Back()
     {
         IsNext = false;
+
+        steps[CurrentIndex].Discard();
         
         if (CurrentIndex < 1)
         {
             backAction?.Discard();
             return;
         }
-        
-        steps[CurrentIndex].Discard();
+
         CurrentIndex--;
         Enter();
     }
+
+    public static bool IsBranchExist(string branchId) => branchById.ContainsKey(branchId);
 }

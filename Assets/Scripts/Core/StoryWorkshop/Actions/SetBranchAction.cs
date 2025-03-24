@@ -13,7 +13,10 @@ namespace StoryWorkshop
         public override void Preload()
         {
             base.Preload();
-            StoryWorld.TryGetLastBranchId(id, out lastBranchId);
+            if(StoryWorld.TryGetLastBranchId(id, out var lastId))
+            {
+                lastBranchId = lastId;
+            }
         }
         
         protected override void OnInvoke()
@@ -27,7 +30,7 @@ namespace StoryWorkshop
         {
             if (StoryWorld.SceneByBranchId.TryGetValue(id, out var loadSceneAction))
             {
-                loadSceneAction.InitId();
+                loadSceneAction.onSuccess.Clear();
                 loadSceneAction.onSuccess.Add((DelegateLSAction)Set);
                 loadSceneAction.Invoke();
                 return;

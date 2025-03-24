@@ -9,6 +9,9 @@ namespace StoryWorkshop
     public abstract class BaseStoryAction : LSAction, ISerializationCallbackReceiver
     {
         [HideInInspector] public string id;
+
+        [NonSerialized] public string branchId;
+        
         public static Dictionary<string, BaseStoryAction> actionById = new();
         private static HashSet<string> calledIds = new();
 
@@ -26,10 +29,13 @@ namespace StoryWorkshop
         
         public sealed override void Invoke()
         {
+            calledIds.Add(id);
+            
             if (ShouldSaveAction)
             {
                 StoryWorld.SetAction(Hash, id);
             }
+            
             OnInvoke();
         }
 
@@ -46,7 +52,7 @@ namespace StoryWorkshop
             {
                 if (StoryWorld.TryGetAction(Hash, out var actionId))
                 {
-                    if (actionById.TryGetValue(actionId, out var action) && calledIds.Add(actionId) )
+                    if (actionById.TryGetValue(actionId, out var action) && calledIds.Add(actionId))
                     {
                         action.Invoke();
                     }
@@ -56,13 +62,12 @@ namespace StoryWorkshop
 
         public virtual void Unload()
         {
-            
+            actionById.Remove(id);
         }
 
         public virtual int Hash => GetType().FullName!.GetHashCode();
-        public void InitId() => id ??= Guid.NewGuid().ToString("N");
         
-        void ISerializationCallbackReceiver.OnBeforeSerialize() => InitId();
+        void ISerializationCallbackReceiver.OnBeforeSerialize() => id ??= Guid.NewGuid().ToString("N");
         void ISerializationCallbackReceiver.OnAfterDeserialize() => actionById[id] = this;
     }
 }
