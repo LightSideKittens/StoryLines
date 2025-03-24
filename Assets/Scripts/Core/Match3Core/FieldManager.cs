@@ -1,43 +1,77 @@
 using System;
 using System.Collections.Generic;
 using DG.Tweening;
+using LSCore.DataStructs;
 using LSCore.Extensions;
+using LSCore.Extensions.Unity;
 using UnityEngine;
 
-public class FieldManager : MonoBehaviour
+public class FieldManager : MonoBehaviour 
 {
+    [Serializable]
+    public class ExpandMask : LSAction
+    {
+        public FieldManager fieldManager;
+        public Vector2Int expand;
+
+        public override void Invoke()
+        {
+            fieldManager.ExpandMaskSize(expand);
+        }
+    }
+    
     public Vector2Int gridSize;
     public List<SpriteRenderer> chips;
     public SpriteRenderer[] masks;
     public Vector2 maskSizeOffset;
-    
-    private SpriteRenderer[,] grid;
-    
+    public int gridSizeOffset = 5;
+
+    private GameObject fieldParent;
+    private Vector2Int realGridSize;
+    private SpriteRenderer[,] fullGrid;
+    private ArraySpan<SpriteRenderer> grid;
+
     private void Awake()
     {
-        grid = new SpriteRenderer[gridSize.x, gridSize.y];
+        realGridSize = gridSize;
+        gridSize.x += gridSizeOffset * 2;
+        gridSize.y += gridSizeOffset * 2;
+        
+        fullGrid = new SpriteRenderer[gridSize.x, gridSize.y];
+        grid = fullGrid.ToSpan(gridSizeOffset..(gridSize.x - gridSizeOffset), gridSizeOffset..(gridSize.y - gridSizeOffset));
+
         InitField();
         transform.position = -new Vector3(gridSize.x / 2f - 0.5f, gridSize.y / 2f - 0.5f);
+        fieldParent = new GameObject("FieldParent");
+        transform.SetParent(fieldParent.transform);
         for (var i = 0; i < masks.Length; i++)
         {
-            masks[i].size = new Vector2(gridSize.x / 2f, gridSize.y) + maskSizeOffset;
+            masks[i].size = new Vector2(realGridSize.x / 2f, realGridSize.y) + maskSizeOffset;
+        }
+    }
+
+    public void ExpandMaskSize(Vector2Int expand)
+    {
+        for (var i = 0; i < masks.Length; i++)
+        {
+            masks[i].DOSize(new Vector2((realGridSize.x + expand.x) / 2f, realGridSize.y + expand.y) + maskSizeOffset, 0.3f);
         }
     }
 
     private void InitField()
     {
-        for (var x = 0; x < grid.GetLength(0); x++)
+        for (var x = 0; x < fullGrid.GetLength(0); x++)
         {
-            for (var y = 0; y < grid.GetLength(1); y++)
+            for (var y = 0; y < fullGrid.GetLength(1); y++)
             {
-                grid[x, y] = CreateRandomChip();
-                grid[x, y].transform.position = new Vector3(x, y);
+                fullGrid[x, y] = CreateRandomChip();
+                fullGrid[x, y].transform.position = new Vector3(x, y);
             }
         }
         
         var draggers = new List<Dragger>();
         
-        for (var x = 0; x < grid.GetLength(0); x++)
+        for (var x = gridSizeOffset; x < fullGrid.GetLength(0) - gridSizeOffset; x++)
         {
             var go = new GameObject($"Dragger Vertical {x}");
             var boxCollider = go.AddComponent<BoxCollider2D>();
@@ -48,11 +82,11 @@ public class FieldManager : MonoBehaviour
             dragger.index = x;
             dragger.isVertical = true;
             
-            boxCollider.size = new Vector2(1, gridSize.y);
-            boxCollider.offset = new Vector3(x, gridSize.y / 2f - 0.5f);
+            boxCollider.size = new Vector2(1, realGridSize.y);
+            boxCollider.offset = new Vector3(x, realGridSize.y / 2f - 0.5f + gridSizeOffset);
         }
         
-        for (var y = 0; y < grid.GetLength(1); y++)
+        for (var y = gridSizeOffset; y < fullGrid.GetLength(1) - gridSizeOffset; y++)
         {
             var go = new GameObject($"Dragger Horizontal {y}");
             var boxCollider = go.AddComponent<BoxCollider2D>();
@@ -63,8 +97,8 @@ public class FieldManager : MonoBehaviour
             dragger.index = y;
             dragger.isVertical = false;
             
-            boxCollider.size = new Vector2(gridSize.x, 1);
-            boxCollider.offset = new Vector3(gridSize.x / 2f - 0.5f, y);
+            boxCollider.size = new Vector2(realGridSize.x, 1);
+            boxCollider.offset = new Vector3(realGridSize.x / 2f - 0.5f + gridSizeOffset, y);
         }
         
         foreach (var dragger in draggers)
@@ -102,41 +136,41 @@ public class FieldManager : MonoBehaviour
         var sequence = DOTween.Sequence();
         if (up)
         {
-            var lastIndex = grid.GetLength(1) - 1;
-            var toDestroy = grid[index, lastIndex];
+            var lastIndex = fullGrid.GetLength(1) - 1;
+            var toDestroy = fullGrid[index, lastIndex];
             var tween = toDestroy.transform.DOLocalMove(Vector3.up, 0.3f).SetRelative(true);
             sequence.Insert(0, tween);
             
             for (int i = lastIndex; i >= 1; i--)
             {
-                grid[index, i] = grid[index, i - 1];
-                tween = grid[index, i - 1].transform.DOLocalMove(Vector3.up, 0.3f).SetRelative(true);
+                fullGrid[index, i] = fullGrid[index, i - 1];
+                tween = fullGrid[index, i - 1].transform.DOLocalMove(Vector3.up, 0.3f).SetRelative(true);
                 sequence.Insert(0, tween);
             }
             
-            grid[index, 0] = CreateRandomChip();
-            grid[index, 0].transform.localPosition = new(index, -1);
-            var tween2 = grid[index, 0].transform.DOLocalMove(new(index, 0), 0.3f)
+            fullGrid[index, 0] = CreateRandomChip();
+            fullGrid[index, 0].transform.localPosition = new(index, -1);
+            var tween2 = fullGrid[index, 0].transform.DOLocalMove(new(index, 0), 0.3f)
                 .OnComplete(() => Destroy(toDestroy.gameObject));
             sequence.Insert(0, tween2);
         }
         else
         {
-            var lastIndex = grid.GetLength(1) - 1;
-            var toDestroy = grid[index, 0];
+            var lastIndex = fullGrid.GetLength(1) - 1;
+            var toDestroy = fullGrid[index, 0];
             var tween = toDestroy.transform.DOLocalMove(Vector3.down, 0.3f).SetRelative(true);
             sequence.Insert(0, tween);
             
             for (int i = 0; i < lastIndex; i++)
             {
-                grid[index, i] = grid[index, i + 1];
-                tween = grid[index, i + 1].transform.DOLocalMove(Vector3.down, 0.3f).SetRelative(true);
+                fullGrid[index, i] = fullGrid[index, i + 1];
+                tween = fullGrid[index, i + 1].transform.DOLocalMove(Vector3.down, 0.3f).SetRelative(true);
                 sequence.Insert(0, tween);
             }
 
-            grid[index, lastIndex] = CreateRandomChip();
-            grid[index, lastIndex].transform.localPosition = new(index, lastIndex + 1);
-            var tween2 = grid[index, lastIndex].transform.DOLocalMove(new(index, lastIndex), 0.3f)
+            fullGrid[index, lastIndex] = CreateRandomChip();
+            fullGrid[index, lastIndex].transform.localPosition = new(index, lastIndex + 1);
+            var tween2 = fullGrid[index, lastIndex].transform.DOLocalMove(new(index, lastIndex), 0.3f)
                 .OnComplete(() => Destroy(toDestroy.gameObject));
             sequence.Insert(0, tween2);
         }
@@ -149,41 +183,41 @@ public class FieldManager : MonoBehaviour
         var sequence = DOTween.Sequence();
         if (right)
         {
-            var lastIndex = grid.GetLength(0) - 1;
-            var toDestroy = grid[lastIndex, index];
+            var lastIndex = fullGrid.GetLength(0) - 1;
+            var toDestroy = fullGrid[lastIndex, index];
             var tween = toDestroy.transform.DOLocalMove(Vector3.right, 0.3f).SetRelative(true);
             sequence.Insert(0, tween);
             
             for (int i = lastIndex; i >= 1; i--)
             {
-                grid[i, index] = grid[i - 1, index]; 
-                tween = grid[i - 1, index].transform.DOLocalMove(Vector3.right, 0.3f).SetRelative(true);
+                fullGrid[i, index] = fullGrid[i - 1, index]; 
+                tween = fullGrid[i - 1, index].transform.DOLocalMove(Vector3.right, 0.3f).SetRelative(true);
                 sequence.Insert(0, tween);
             }
             
-            grid[0, index] = CreateRandomChip();
-            grid[0, index].transform.localPosition = new(-1, index);
-            var tween2 = grid[0, index].transform.DOLocalMove(new(0, index), 0.3f)
+            fullGrid[0, index] = CreateRandomChip();
+            fullGrid[0, index].transform.localPosition = new(-1, index);
+            var tween2 = fullGrid[0, index].transform.DOLocalMove(new(0, index), 0.3f)
                 .OnComplete(() => Destroy(toDestroy.gameObject));
             sequence.Insert(0, tween2);
         }
         else
         {
-            var lastIndex = grid.GetLength(0) - 1;
-            var toDestroy = grid[0, index];
+            var lastIndex = fullGrid.GetLength(0) - 1;
+            var toDestroy = fullGrid[0, index];
             var tween = toDestroy.transform.DOLocalMove(Vector3.left, 0.3f).SetRelative(true);
             sequence.Insert(0, tween);
             
             for (int i = 0; i < lastIndex; i++)
             {
-                grid[i, index] = grid[i + 1, index];
-                tween = grid[i + 1, index].transform.DOLocalMove(Vector3.left, 0.3f).SetRelative(true);
+                fullGrid[i, index] = fullGrid[i + 1, index];
+                tween = fullGrid[i + 1, index].transform.DOLocalMove(Vector3.left, 0.3f).SetRelative(true);
                 sequence.Insert(0, tween);
             }
             
-            grid[lastIndex, index] = CreateRandomChip();
-            grid[lastIndex, index].transform.localPosition = new(lastIndex + 1, index);
-            var tween2 = grid[lastIndex, index].transform.DOLocalMove(new(lastIndex, index), 0.3f)
+            fullGrid[lastIndex, index] = CreateRandomChip();
+            fullGrid[lastIndex, index].transform.localPosition = new(lastIndex + 1, index);
+            var tween2 = fullGrid[lastIndex, index].transform.DOLocalMove(new(lastIndex, index), 0.3f)
                 .OnComplete(() => Destroy(toDestroy.gameObject));
             sequence.Insert(0, tween2);
         }
@@ -235,7 +269,7 @@ public class FieldManager : MonoBehaviour
                         {
                             (grid[x, yy], grid[x, i]) = (grid[x, i], grid[x, yy]);
                             yy--;
-                            pos = new Vector3(x, i);
+                            pos = new Vector3(x + gridSizeOffset, i + gridSizeOffset);
                             needMove = true;
                         }
                         else
@@ -262,9 +296,9 @@ public class FieldManager : MonoBehaviour
                 startY = grid.GetLength(1) - y;
                 grid[x, y] = CreateRandomChip();
                 target = grid[x, y];
-                var pos = new Vector3(x, y);
+                var pos = new Vector3(x + gridSizeOffset, y + gridSizeOffset);
                 
-                setPos += () =>
+                setPos += () => 
                 {
                     target.transform.localPosition = new(pos.x, pos.y + startY);
                     tween.Insert(0, target.transform.DOLocalMove(pos, 0.3f));
