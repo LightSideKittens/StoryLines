@@ -70,6 +70,7 @@ public class Dragger : MonoBehaviour
         }
     }
     
+    
     private void CheckTouch(Vector3 touchPosition)
     {
         var hitCollider = new HashSet<Collider2D>(Physics2DExt.FindAll(touchPosition));

@@ -8,7 +8,9 @@ public class FieldManager : MonoBehaviour
 {
     public Vector2Int gridSize;
     public List<SpriteRenderer> chips;
-    public SpriteMask mask;
+    public SpriteRenderer[] masks;
+    public Vector2 maskSizeOffset;
+    
     private SpriteRenderer[,] grid;
     
     private void Awake()
@@ -16,7 +18,10 @@ public class FieldManager : MonoBehaviour
         grid = new SpriteRenderer[gridSize.x, gridSize.y];
         InitField();
         transform.position = -new Vector3(gridSize.x / 2f - 0.5f, gridSize.y / 2f - 0.5f);
-        mask.transform.localScale = new Vector3(gridSize.x, gridSize.y, 1);
+        for (var i = 0; i < masks.Length; i++)
+        {
+            masks[i].size = new Vector2(gridSize.x / 2f, gridSize.y) + maskSizeOffset;
+        }
     }
 
     private void InitField()
@@ -197,11 +202,22 @@ public class FieldManager : MonoBehaviour
             grid[index.x, index.y] = null;
         }
 
-        FillGrid();
+        if (indexes.Count > 0)
+        {
+            var tween = FillGrid();
+
+            tween?.OnComplete(() =>
+            {
+                indexes.Clear();
+                CheckAndDestroyChips(indexes);
+            });
+        }
     }
 
-    private void FillGrid()
+    private Tween FillGrid()
     {
+        var tween = DOTween.Sequence();
+        
         for (int x = 0; x < grid.GetLength(0); x++)
         {
             for (int y = 0; y < grid.GetLength(1); y++)
@@ -230,7 +246,7 @@ public class FieldManager : MonoBehaviour
 
                     if (needMove)
                     {
-                        target.transform.DOLocalMove(pos, 0.3f);
+                        tween.Insert(0, target.transform.DOLocalMove(pos, 0.3f));
                     }
                 }
             }
@@ -251,12 +267,19 @@ public class FieldManager : MonoBehaviour
                 setPos += () =>
                 {
                     target.transform.localPosition = new(pos.x, pos.y + startY);
-                    target.transform.DOLocalMove(pos, 0.3f);
+                    tween.Insert(0, target.transform.DOLocalMove(pos, 0.3f));
                 };
             }
 
             setPos?.Invoke();
         }
+
+        if (tween.Duration() > 0)
+        {
+            return tween;
+        }
+        
+        return null;
     }
     
     private void CheckAndDestroyChips(HashSet<Vector2Int> indexes, bool checkRows)
