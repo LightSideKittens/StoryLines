@@ -24,6 +24,7 @@ public class StoryWorld : ServiceManager
     public string configName;
 
     public static JToken Config => JTokenGameConfig.Get(Instance.configName);
+    public static JTokenGameConfigManager Manager => JTokenGameConfig.GetManager(Instance.configName);
     
     public SetBranchAction startBranchAction;
     public UniDict<string, LoadScene> sceneByBranchId;
@@ -70,6 +71,12 @@ public class StoryWorld : ServiceManager
                 startBranchAction?.Invoke();
             }
         }
+    }
+
+    protected override void OnDestroy()
+    {
+        base.OnDestroy();
+        Manager.OnWorldDestroy();
     }
 
     public static JObject GetJObject(string propertyName) => Config.GetOrCreate<JObject>(propertyName);
