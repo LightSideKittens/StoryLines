@@ -15,6 +15,11 @@ MonoBehaviour:
   m_GroupName: Main
   m_GUID: afd6c21c5db430540a409a132a6eaed9
   m_SerializeEntries:
+  - m_GUID: 898b2e213e52ada4097c0100e92e2550
+    m_Address: Assets/Scenes/Meta.unity
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d11414f9bff75154fbdb11bc06ebe918
     m_Address: Forest
     m_ReadOnly: 0

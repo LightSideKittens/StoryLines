@@ -119,6 +119,146 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &1275711717
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1275711719}
+  - component: {fileID: 1275711718}
+  m_Layer: 0
+  m_Name: StoryWorld
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1275711718
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1275711717}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ceafab36e204e6ea544d573f8454ba7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  services:
+  - {fileID: 7525358757767478935, guid: d71f6af05ff306a45a06fa0a979c7643, type: 3}
+  - {fileID: 533459685140509273, guid: 1dcf9060274ad1f41b651b0e0ce35f37, type: 3}
+  - {fileID: 5420135064735708736, guid: b94916dee7d60274f988283713ea66ae, type: 3}
+  - {fileID: 1267863140379829885, guid: 6a39b8f4cd7998a41bd99691c60fb230, type: 3}
+  - {fileID: 8862249399163411322, guid: 6fda5993a1c01494cb712690a156abf5, type: 3}
+  configName: SayaStory_2
+  startBranchAction:
+    id: 97421e2ef0f240968b4e7bedcdd3b767
+    branchId: SayaBranch_1
+  sceneByBranchId:
+    data:
+    - key: SayaBranch_1
+      value:
+        id: a8f3e9401cfc4ba9a93af01b35bfa2ab
+        sceneRef:
+          m_AssetGUID: eda0e1117ac075f469738f6dbec206f7
+          m_SubObjectName: 
+          m_SubObjectGUID: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        onSuccess: []
+    - key: Saya_ChooseAnotherBranch
+      value:
+        id: 2a1d3c12ef794ac7b9c153c41041bdb5
+        sceneRef:
+          m_AssetGUID: eda0e1117ac075f469738f6dbec206f7
+          m_SubObjectName: 
+          m_SubObjectGUID: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        onSuccess: []
+    - key: AuraBranch_1
+      value:
+        id: a59bc90c10b84fb2a5dd27ab9a71db6a
+        sceneRef:
+          m_AssetGUID: 07da01a0c0fdb6340818a07ccaea8efb
+          m_SubObjectName: 
+          m_SubObjectGUID: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        onSuccess: []
+    - key: JackBranch_1
+      value:
+        id: 0b301b2435ee43f195621082736bd064
+        sceneRef:
+          m_AssetGUID: 907ea1bb2ef4a15448ed8c98dbde0239
+          m_SubObjectName: 
+          m_SubObjectGUID: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        onSuccess: []
+    - key: FoxyBranch_1
+      value:
+        id: e2cc4e65519c43a29a01ec5c0acb0686
+        sceneRef:
+          m_AssetGUID: f10c3940e503c68409d46c1e0cb24172
+          m_SubObjectName: 
+          m_SubObjectGUID: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        onSuccess: []
+  references:
+    version: 2
+    RefIds: []
+--- !u!4 &1275711719
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1275711717}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1754515565
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1754515566}
+  m_Layer: 0
+  m_Name: Branches
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &1754515566
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1754515565}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1890740884
 GameObject:
   m_ObjectHideFlags: 0
@@ -216,3 +356,5 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 1890740887}
+  - {fileID: 1275711719}
+  - {fileID: 1754515566}

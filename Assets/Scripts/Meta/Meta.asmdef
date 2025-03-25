@@ -1,15 +1,14 @@
 {
-    "name": "Common",
+    "name": "Meta",
     "rootNamespace": "",
     "references": [
-        "GUID:a6b7f487c8a89734f91e6aeb16bba6ca",
-        "GUID:75992adb30bf51f40a7a0f3283432aa2",
-        "GUID:d426b638445cc2f428ed8ba7c1325767",
-        "GUID:6055be8ebefd69e48b49212b09b47b2f",
-        "GUID:247942eb90ec48b696028c8e4c1f8e20",
-        "GUID:874b5c2f5d24c904483a76df58f4f289",
         "GUID:9e24947de15b9834991c9d8411ea37cf",
-        "GUID:84651a3751eca9349aac36a66bba901b"
+        "GUID:84651a3751eca9349aac36a66bba901b",
+        "GUID:874b5c2f5d24c904483a76df58f4f289",
+        "GUID:247942eb90ec48b696028c8e4c1f8e20",
+        "GUID:bf7ff6a5f1ab4e7baeeb073ec412feef",
+        "GUID:a6b7f487c8a89734f91e6aeb16bba6ca",
+        "GUID:75992adb30bf51f40a7a0f3283432aa2"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
