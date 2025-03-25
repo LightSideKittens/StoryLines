@@ -218,9 +218,6 @@ MonoBehaviour:
   onHiding: []
   onShowed: []
   onHidden: []
-  startBranchAction:
-    id: 97421e2ef0f240968b4e7bedcdd3b767
-    branchId: SayaBranch_1
   text: {fileID: 714570258467901832}
   contentParent: {fileID: 1236807938398582970}
   buttonPrefab: {fileID: 8859195145097938009, guid: 17e6552cb5963c84caedab99d7d7306b, type: 3}
@@ -288,8 +285,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -150.59998, y: -1669}
-  m_SizeDelta: {x: -551.2, y: 0}
+  m_AnchoredPosition: {x: -53.6, y: -1051}
+  m_SizeDelta: {x: -196, y: 0}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &3849568299310315677
 CanvasRenderer:
@@ -416,7 +413,7 @@ MonoBehaviour:
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
+  m_PixelsPerUnitMultiplier: 1.5
   rotateId: 0
   flip: {x: 0, y: 0}
   mirror: {x: 1, y: 0}
@@ -435,10 +432,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Padding:
-    m_Left: 40
-    m_Right: 40
-    m_Top: 40
-    m_Bottom: 30
+    m_Left: 25
+    m_Right: 25
+    m_Top: 25
+    m_Bottom: 15
   m_ChildAlignment: 2
   m_Spacing: 0
   m_ChildForceExpandWidth: 0
@@ -461,8 +458,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_IgnoreLayout: 0
-  m_MinWidth: 180
-  m_MinHeight: 140
+  m_MinWidth: 140
+  m_MinHeight: 100
   m_PreferredWidth: -1
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
@@ -478,7 +475,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 205861021706631520, guid: b9ba71c8f7ff7a9429aecc2013634e5b, type: 3}
       propertyPath: m_text
-      value: 
+      value: sdfsfsasfdasasdf
       objectReference: {fileID: 0}
     - target: {fileID: 205861021706631520, guid: b9ba71c8f7ff7a9429aecc2013634e5b, type: 3}
       propertyPath: m_fontSize
@@ -2141,7 +2138,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5152584803132117391, guid: 7dcdd2e6125cbff4ab407b7dff71d128, type: 3}
       propertyPath: m_Pivot.y
-      value: 1
+      value: 0.99999994
       objectReference: {fileID: 0}
     - target: {fileID: 5152584803132117391, guid: 7dcdd2e6125cbff4ab407b7dff71d128, type: 3}
       propertyPath: m_AnchorMax.x
@@ -2161,11 +2158,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5152584803132117391, guid: 7dcdd2e6125cbff4ab407b7dff71d128, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 84.9
+      value: 60.8
       objectReference: {fileID: 0}
     - target: {fileID: 5152584803132117391, guid: 7dcdd2e6125cbff4ab407b7dff71d128, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 84.9
+      value: 60.8
       objectReference: {fileID: 0}
     - target: {fileID: 5152584803132117391, guid: 7dcdd2e6125cbff4ab407b7dff71d128, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2197,11 +2194,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5152584803132117391, guid: 7dcdd2e6125cbff4ab407b7dff71d128, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -88.965
+      value: -70
       objectReference: {fileID: 0}
     - target: {fileID: 5152584803132117391, guid: 7dcdd2e6125cbff4ab407b7dff71d128, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 42.45
+      value: 33.7
       objectReference: {fileID: 0}
     - target: {fileID: 5152584803132117391, guid: 7dcdd2e6125cbff4ab407b7dff71d128, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

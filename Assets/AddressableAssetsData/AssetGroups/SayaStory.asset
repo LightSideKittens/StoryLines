@@ -30,6 +30,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9a5eb26cb37f23a4f80af5b9effcaceb
+    m_Address: Assets/Scenes/SayaStory/Match3.unity
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 9c26a330170b0594db5b4211bfe233d1
     m_Address: Assets/Scenes/SayaStory/SayaStory_4.unity
     m_ReadOnly: 0

@@ -60,6 +60,14 @@ public class StoryBranch : MonoBehaviour
                 action.Unload();
             }
         }
+
+        public void Exit()
+        {
+            foreach (var action in onEnter)
+            {
+                action.Exit();
+            }
+        }
     }
 
     public string id;
@@ -215,6 +223,7 @@ public class StoryBranch : MonoBehaviour
         
         if(!IsValidIndex) return;
         
+        steps[CurrentIndex].Exit();
         steps[CurrentIndex].OnNext();
         CurrentIndex++;
         
@@ -239,6 +248,7 @@ public class StoryBranch : MonoBehaviour
             return;
         }
 
+        steps[CurrentIndex].Exit();
         CurrentIndex--;
         Enter();
     }

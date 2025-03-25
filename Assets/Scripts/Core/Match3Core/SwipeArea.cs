@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using LSCore.Extensions.Unity;
 using UnityEngine;
 
-public class Dragger : MonoBehaviour
+public class SwipeArea : MonoBehaviour
 {
     public enum SwipeDirection
     {
@@ -21,8 +21,7 @@ public class Dragger : MonoBehaviour
     private bool isDragging = false;
     private Vector3 offset;
     private Vector2 startTouchPos;
-    public event Action Started;
-    public event Action<int, SwipeDirection> Ended;
+    public event Action<int, SwipeDirection> Swiped;
     private Collider2D col2D;
 
     private void Start()
@@ -43,10 +42,6 @@ public class Dragger : MonoBehaviour
                 case TouchPhase.Began:
                     startTouchPos = touch.position;
                     CheckTouch(touchPosition);
-                    if (isDragging)
-                    {
-                        Started?.Invoke();
-                    }
                     break;
 
                 case TouchPhase.Moved:
@@ -57,7 +52,7 @@ public class Dragger : MonoBehaviour
                         if (dir.magnitude > threshold)
                         {
                             isDragging = false;
-                            Ended?.Invoke(index, GetSwipeDirection(dir));
+                            Swiped?.Invoke(index, GetSwipeDirection(dir));
                         }
                     }
                     break;

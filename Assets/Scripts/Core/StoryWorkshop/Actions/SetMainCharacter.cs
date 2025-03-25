@@ -56,7 +56,7 @@ namespace StoryWorkshop
             target.SetActive(false);
             base.Preload();
 
-            if (lastCharacter == this)
+            if (lastCharacter.target == target)
             {
                 target.SetActive(true);
             }

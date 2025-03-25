@@ -197,6 +197,7 @@ MonoBehaviour:
   - {fileID: 533459685140509273, guid: 1dcf9060274ad1f41b651b0e0ce35f37, type: 3}
   - {fileID: 5420135064735708736, guid: b94916dee7d60274f988283713ea66ae, type: 3}
   - {fileID: 1267863140379829885, guid: 6a39b8f4cd7998a41bd99691c60fb230, type: 3}
+  - {fileID: 8862249399163411322, guid: 6fda5993a1c01494cb712690a156abf5, type: 3}
   configName: SayaStory
   startBranchAction:
     id: 97421e2ef0f240968b4e7bedcdd3b767
@@ -253,7 +254,6 @@ MonoBehaviour:
           m_SubObjectType: 
           m_EditorAssetChanged: 1
         onSuccess: []
-  branches: {fileID: 1754515565}
   references:
     version: 2
     RefIds: []

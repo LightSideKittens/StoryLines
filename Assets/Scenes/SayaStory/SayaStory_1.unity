@@ -158,8 +158,13 @@ MonoBehaviour:
     - rid: 6193574728977350948
     onNext: []
   - onEnter:
+    - rid: 6193574840966840636
+    - rid: 6193574840966840643
+    onNext: []
+  - onEnter:
     - rid: 6193574728977350949
     - rid: 6193574787910729890
+    - rid: 6193574840966840644
     onNext: []
   - onEnter:
     - rid: 6193574728977350955
@@ -177,7 +182,10 @@ MonoBehaviour:
       type: {class: TextAction, ns: StoryWorkshop, asm: StoryWorkshop}
       data:
         id: 11ee90e09d874b04837b318471f971ad
-        text: "\u041C\u0435\u043D\u044F \u0437\u043E\u0432\u0443\u0442 \u0421\u0430\u0439\u0430"
+        text: "\u041C\u0435\u043D\u044F \u0437\u043E\u0432\u0443\u0442 \u0421\u0430\u0439\u0430.
+          \u041F\u0440\u043E\u0439\u0434\u0438 \u043D\u0435\u0431\u043E\u043B\u044C\u0448\u0443\u044E
+          \u0438\u0433\u0440\u0443, \u0447\u0442\u043E\u0431\u044B \u043F\u043E\u043D\u044F\u0442\u044C
+          \u043D\u0430 \u0447\u0442\u043E \u0442\u044B \u0441\u043F\u043E\u0441\u043E\u0431\u0435\u043D"
     - rid: 6193574728977350949
       type: {class: TextAction, ns: StoryWorkshop, asm: StoryWorkshop}
       data:
@@ -219,6 +227,27 @@ MonoBehaviour:
       type: {class: SetMainCharacter, ns: StoryWorkshop, asm: StoryWorkshop}
       data:
         id: 352c268380854296b9d5a888e8cefaa7
+        target: {fileID: 1567270255}
+    - rid: 6193574840966840636
+      type: {class: LoadGameAction, ns: StoryWorkshop, asm: StoryWorkshop}
+      data:
+        id: edcce89a97cb4583a5ebac6b4304f3c0
+        unloadCurrentScene: 0
+        sceneRef:
+          m_AssetGUID: 9a5eb26cb37f23a4f80af5b9effcaceb
+          m_SubObjectName: 
+          m_SubObjectGUID: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 1
+    - rid: 6193574840966840643
+      type: {class: SetMainCharacter, ns: StoryWorkshop, asm: StoryWorkshop}
+      data:
+        id: 246d9f2e2f5f4b2c8f813c9618a33a42
+        target: {fileID: 1639696784}
+    - rid: 6193574840966840644
+      type: {class: SetMainCharacter, ns: StoryWorkshop, asm: StoryWorkshop}
+      data:
+        id: 7780dcb4b9354ce2ac2c7b6aa200d3bd
         target: {fileID: 1567270255}
 --- !u!4 &1533325028
 Transform:
@@ -359,6 +388,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1639696784
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1639696785}
+  m_Layer: 0
+  m_Name: EmptryCharacter
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1639696785
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1639696784}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1817818727
 GameObject:
   m_ObjectHideFlags: 0
@@ -431,3 +491,4 @@ SceneRoots:
   - {fileID: 1567270259}
   - {fileID: 1533325028}
   - {fileID: 1817818729}
+  - {fileID: 1639696785}

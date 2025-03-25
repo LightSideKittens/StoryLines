@@ -1,22 +1,22 @@
 using System;
 using System.Collections.Generic;
+using Core.Match3Core;
 using DG.Tweening;
+using LSCore;
 using LSCore.DataStructs;
 using LSCore.Extensions;
-using LSCore.Extensions.Unity;
 using UnityEngine;
 
-public class FieldManager : MonoBehaviour 
+public class Match3Field : MonoBehaviour 
 {
     [Serializable]
     public class ExpandMask : LSAction
     {
-        public FieldManager fieldManager;
         public Vector2Int expand;
 
         public override void Invoke()
         {
-            fieldManager.ExpandMaskSize(expand);
+            instance.ExpandMaskSize(expand);
         }
     }
     
@@ -25,14 +25,53 @@ public class FieldManager : MonoBehaviour
     public SpriteRenderer[] masks;
     public Vector2 maskSizeOffset;
     public int gridSizeOffset = 5;
+    public int pointsToWin = 100;
 
+    private bool isGridAnimating;
     private GameObject fieldParent;
     private Vector2Int realGridSize;
     private SpriteRenderer[,] fullGrid;
     private ArraySpan<SpriteRenderer> grid;
+    private float lastCameraSize;
+    private int steps;
 
+    private int Steps
+    {
+        get => steps;
+        set
+        {
+            steps = value;
+            Match3Window.StepsText.text = "Steps: " + steps;
+        }
+    }
+    
+    private int points;
+
+    private int Points
+    {
+        get => points;
+        set
+        {
+            points = value;
+            Match3Window.PointsText.text = "Points: " + points;
+            if (points >= pointsToWin)
+            {
+                Match3Window.Win();
+            }
+        }
+    }
+    
+    private static Match3Field instance;
+    
     private void Awake()
     {
+        instance = this;
+        lastCameraSize = Camera.main.orthographicSize;
+        Camera.main.orthographicSize = gridSize.x + 2;
+        
+        Match3Window.Show();
+        Steps = 0;
+        Points = 0;
         realGridSize = gridSize;
         gridSize.x += gridSizeOffset * 2;
         gridSize.y += gridSizeOffset * 2;
@@ -46,12 +85,22 @@ public class FieldManager : MonoBehaviour
         transform.SetParent(fieldParent.transform);
         for (var i = 0; i < masks.Length; i++)
         {
+            masks[i].transform.SetParent(fieldParent.transform);
             masks[i].size = new Vector2(realGridSize.x / 2f, realGridSize.y) + maskSizeOffset;
         }
     }
 
+    private void OnDestroy()
+    {
+        new GoBack().Invoke();
+        Camera.main.orthographicSize = lastCameraSize;
+    }
+
     public void ExpandMaskSize(Vector2Int expand)
     {
+        var factor = (float)realGridSize.x / (realGridSize.x + expand.x);
+        fieldParent.transform.DOScale(Vector3.one * factor, .3f);
+        
         for (var i = 0; i < masks.Length; i++)
         {
             masks[i].DOSize(new Vector2((realGridSize.x + expand.x) / 2f, realGridSize.y + expand.y) + maskSizeOffset, 0.3f);
@@ -69,13 +118,13 @@ public class FieldManager : MonoBehaviour
             }
         }
         
-        var draggers = new List<Dragger>();
+        var draggers = new List<SwipeArea>();
         
         for (var x = gridSizeOffset; x < fullGrid.GetLength(0) - gridSizeOffset; x++)
         {
             var go = new GameObject($"Dragger Vertical {x}");
             var boxCollider = go.AddComponent<BoxCollider2D>();
-            var dragger = go.AddComponent<Dragger>();
+            var dragger = go.AddComponent<SwipeArea>();
             draggers.Add(dragger);
             dragger.transform.SetParent(transform);
             dragger.transform.localPosition = Vector3.zero;
@@ -90,7 +139,7 @@ public class FieldManager : MonoBehaviour
         {
             var go = new GameObject($"Dragger Horizontal {y}");
             var boxCollider = go.AddComponent<BoxCollider2D>();
-            var dragger = go.AddComponent<Dragger>();
+            var dragger = go.AddComponent<SwipeArea>();
             draggers.Add(dragger);
             dragger.transform.SetParent(transform);
             dragger.transform.localPosition = Vector3.zero;
@@ -103,27 +152,35 @@ public class FieldManager : MonoBehaviour
         
         foreach (var dragger in draggers)
         {
-            dragger.Ended += OnEnd;
+            dragger.Swiped += OnEnd;
         }
         
-        void OnEnd(int index, Dragger.SwipeDirection direction)
+        void OnEnd(int index, SwipeArea.SwipeDirection direction)
         {
+            if(isGridAnimating) return;
+            
             Tween tween = direction switch
             {
-                Dragger.SwipeDirection.Up => SwipeVertical(index, true),
-                Dragger.SwipeDirection.Down => SwipeVertical(index, false),
-                Dragger.SwipeDirection.Right => SwipeHorizontal(index, true),
-                Dragger.SwipeDirection.Left => SwipeHorizontal(index, false),
-                Dragger.SwipeDirection.None => null,
+                SwipeArea.SwipeDirection.Up => SwipeVertical(index, true),
+                SwipeArea.SwipeDirection.Down => SwipeVertical(index, false),
+                SwipeArea.SwipeDirection.Right => SwipeHorizontal(index, true),
+                SwipeArea.SwipeDirection.Left => SwipeHorizontal(index, false),
+                SwipeArea.SwipeDirection.None => null,
             };
 
-            if (direction != Dragger.SwipeDirection.None)
+            if (direction != SwipeArea.SwipeDirection.None)
             {
+                Steps++;
+                isGridAnimating = true;
                 tween.OnComplete(() =>
                 {
                     var set = new HashSet<Vector2Int>();
                     CheckAndDestroyChips(set);
                 });
+            }
+            else
+            {
+                isGridAnimating = false;
             }
         }
     }
@@ -225,8 +282,9 @@ public class FieldManager : MonoBehaviour
         return sequence;
     }
 
-    private void CheckAndDestroyChips(HashSet<Vector2Int> indexes)
+    private Tween CheckAndDestroyChips(HashSet<Vector2Int> indexes)
     {
+        isGridAnimating = true;
         CheckAndDestroyChips(indexes, false);
         CheckAndDestroyChips(indexes, true);
         
@@ -238,14 +296,21 @@ public class FieldManager : MonoBehaviour
 
         if (indexes.Count > 0)
         {
+            Points += indexes.Count * 10;
             var tween = FillGrid();
 
             tween?.OnComplete(() =>
             {
+                isGridAnimating = false;
                 indexes.Clear();
                 CheckAndDestroyChips(indexes);
             });
+            
+            return tween;
         }
+
+        isGridAnimating = false;
+        return null;
     }
 
     private Tween FillGrid()

@@ -16,6 +16,7 @@ namespace StoryWorkshop
         private static HashSet<string> calledIds = new();
 
         protected virtual bool ShouldSaveAction => true;
+        protected virtual bool ShouldDeleteActionOnExit => false;
 #if UNITY_EDITOR
         static BaseStoryAction()
         {
@@ -37,6 +38,14 @@ namespace StoryWorkshop
             }
             
             OnInvoke();
+        }
+
+        public virtual void Exit()
+        {
+            if (ShouldDeleteActionOnExit)
+            {
+                StoryWorld.RemoveAction(Hash);
+            }
         }
 
         protected abstract void OnInvoke();

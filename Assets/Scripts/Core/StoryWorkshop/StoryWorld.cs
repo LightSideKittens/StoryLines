@@ -46,7 +46,10 @@ public class StoryWorld : ServiceManager
             loadScene.Preload();
             if (TryGetAction(loadScene.Hash, out _))
             {
-                lastScene = loadScene;
+                if (lastScene == null || lastScene.sceneRef != loadScene.sceneRef)
+                {
+                    lastScene = loadScene;
+                }
             }
         }
         
