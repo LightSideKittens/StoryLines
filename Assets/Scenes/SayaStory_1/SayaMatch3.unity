@@ -461,6 +461,7 @@ MonoBehaviour:
   masks:
   - {fileID: 578410083}
   - {fileID: 183564724}
+  fadePrefab: {fileID: 3097468775311265413, guid: 5fab2a19db17cc140a4c49b309b45c66, type: 3}
   maskSizeOffset: {x: 0.08, y: 0.1}
   gridSizeOffset: 5
   pointsToWin: 130

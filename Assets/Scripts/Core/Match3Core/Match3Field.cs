@@ -23,10 +23,12 @@ public class Match3Field : MonoBehaviour
     public Vector2Int gridSize;
     public List<SpriteRenderer> chips;
     public SpriteRenderer[] masks;
+    public SpriteRenderer fadePrefab;
     public Vector2 maskSizeOffset;
     public int gridSizeOffset = 5;
     public int pointsToWin = 100;
 
+    private SpriteRenderer[] fades = new SpriteRenderer[4];
     private bool isGridAnimating;
     private GameObject fieldParent;
     private Vector2Int realGridSize;
@@ -79,9 +81,9 @@ public class Match3Field : MonoBehaviour
         fullGrid = new SpriteRenderer[gridSize.x, gridSize.y];
         grid = fullGrid.ToSpan(gridSizeOffset..(gridSize.x - gridSizeOffset), gridSizeOffset..(gridSize.y - gridSizeOffset));
 
+        fieldParent = new GameObject("FieldParent");
         InitField();
         transform.position = -new Vector3(gridSize.x / 2f - 0.5f, gridSize.y / 2f - 0.5f);
-        fieldParent = new GameObject("FieldParent");
         transform.SetParent(fieldParent.transform);
         for (var i = 0; i < masks.Length; i++)
         {
@@ -96,15 +98,49 @@ public class Match3Field : MonoBehaviour
         Camera.main.orthographicSize = lastCameraSize;
     }
 
+    private Sequence expandSequence;
+    private float lastFactor;
+    
     public void ExpandMaskSize(Vector2Int expand)
     {
         var factor = (float)realGridSize.x / (realGridSize.x + expand.x);
-        fieldParent.transform.DOScale(Vector3.one * factor, .3f);
         
-        for (var i = 0; i < masks.Length; i++)
+        if (expand.x == 0)
         {
-            masks[i].DOSize(new Vector2((realGridSize.x + expand.x) / 2f, realGridSize.y + expand.y) + maskSizeOffset, 0.3f);
+            expandSequence.Goto(expandSequence.Duration());
+            expandSequence.PlayBackwards();
         }
+        else
+        {
+            expandSequence = GetAnim();
+        }
+
+        Sequence GetAnim()
+        {
+            var sequence = DOTween.Sequence();
+            sequence.Append(SetHintChipsAlpha(1, 0));
+            sequence.Append(fieldParent.transform.DOScale(Vector3.one * factor, .3f));
+            for (var i = 0; i < masks.Length; i++)
+            {
+                sequence.Insert(0.3f, masks[i].DOSize(new Vector2((realGridSize.x + expand.x) / 2f, realGridSize.y + expand.y) + maskSizeOffset, 0.3f));
+            }
+
+            sequence.Append(SetHintChipsAlpha(0.85f, 0.5f));
+            
+            return sequence.SetAutoKill(false);
+        }
+    }
+
+    private Tween SetHintChipsAlpha(float alpha, float duration)
+    {
+        var sequence = DOTween.Sequence();
+        
+        for (var i = 0; i < fades.Length; i++)
+        {
+            sequence.Insert(0, fades[i].DOFade(alpha, duration));
+        }
+        
+        return sequence;
     }
 
     private void InitField()
@@ -116,6 +152,31 @@ public class Match3Field : MonoBehaviour
                 fullGrid[x, y] = CreateRandomChip();
                 fullGrid[x, y].transform.position = new Vector3(x, y);
             }
+        }
+        
+        float ex = (realGridSize.x + 1) / 2f;
+        float ey = (realGridSize.y + 1) / 2f;
+        
+        Vector2[] positions = new Vector2[]
+        {
+            new Vector2(-ex, 0),
+            new Vector2(ex, 0),
+            new Vector2(0, -ey),
+            new Vector2(0, ey),
+        };
+        
+        for (int i = 0; i < 2; i++)
+        {
+            var fade = Instantiate(fadePrefab, fieldParent.transform);
+            fade.transform.localPosition = positions[i];
+            fades[i] = fade;
+        }
+        
+        for (int i = 2; i < 4; i++)
+        {
+            var fade = Instantiate(fadePrefab, Vector3.zero, Quaternion.Euler(0, 0, 90), fieldParent.transform);
+            fade.transform.localPosition = positions[i];
+            fades[i] = fade;
         }
         
         var draggers = new List<SwipeArea>();
