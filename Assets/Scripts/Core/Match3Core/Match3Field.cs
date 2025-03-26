@@ -217,6 +217,7 @@ public partial class Match3Field : MonoBehaviour
 
         void OnDragging(int index, SwipeArea.SwipeDirection direction, Vector2 delta)
         {
+            if(isGridAnimating) return;
             var data = (index, direction);
             if(currentDragger != default && currentDragger != data) return;
 
@@ -260,15 +261,16 @@ public partial class Match3Field : MonoBehaviour
 
         void OnEnd(int index, SwipeArea.SwipeDirection direction, Vector2 delta)
         {
+            if(isGridAnimating) return;
             var data = (index, direction);
             
             if(currentDragger != default && currentDragger != data) return;
             
+            isGridAnimating = true;
             endTween = OnEndAnim(index, delta);
             
             if (endTween == null)
             {
-                isGridAnimating = true;
                 delta = GetWorldDelta(delta);
             
                 if (direction is SwipeArea.SwipeDirection.Up or SwipeArea.SwipeDirection.Down)
@@ -285,20 +287,19 @@ public partial class Match3Field : MonoBehaviour
                         DragHorizontal(index, delta * x);
                     }).SetEase(Ease.InOutSine);
                 }
+                
+                endTween.onComplete += () =>
+                {
+                    currentDragger = default;
+                    isGridAnimating = false;
+                };
             }
-
-            endTween.onComplete += () =>
-            {
-                currentDragger = default;
-                isGridAnimating = false;
-            };
         }
 
         Tween OnEndAnim(int index, Vector2 delta)
         {
             delta = GetWorldDelta(delta);
             if (Mathf.Abs(delta.x) < 0.5f && Mathf.Abs(delta.y) < 0.5f) return null;
-            if(isGridAnimating) return null;
             
             Tween tween = null;
 
@@ -308,7 +309,6 @@ public partial class Match3Field : MonoBehaviour
             if (delta.y < 0) tween = SwipeVertical(index, false);
 
             Steps++;
-            isGridAnimating = true;
             tween.OnComplete(CheckAndDestroyChips);
             
             return tween;
@@ -349,10 +349,11 @@ public partial class Match3Field : MonoBehaviour
         
         if (sets.Count > 0)
         {
-           
+            FillOnDestroyEnded();
         }
         else
         {
+            currentDragger = default;
             isGridAnimating = false;
         }
 
@@ -384,13 +385,7 @@ public partial class Match3Field : MonoBehaviour
     private Tween FillOnDestroyEnded()
     {
         var tween = FillGrid();
-
-        tween?.OnComplete(() =>
-        {
-            isGridAnimating = false;
-            CheckAndDestroyChips();
-        });
-            
+        tween?.OnComplete(CheckAndDestroyChips);
         return tween;
     }
     

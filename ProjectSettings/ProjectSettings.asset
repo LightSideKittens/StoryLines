@@ -13,7 +13,7 @@ PlayerSettings:
   useOnDemandResources: 0
   accelerometerFrequency: 0
   companyName: Friendly Pixels
-  productName: Story Line
+  productName: Story Lines
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
   m_SplashScreenBackgroundColor: {r: 0.37254903, g: 0.2509804, b: 0.53333336, a: 1}
