@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Core.Match3Core;
 using DG.Tweening;
-using LSCore;
 using LSCore.Async;
 using LSCore.DataStructs;
 using LSCore.Extensions;
@@ -29,7 +29,7 @@ public partial class Match3Field : MonoBehaviour
     public SpriteRenderer fadePrefab;
     public Vector2 maskSizeOffset;
     public int gridSizeOffset = 5;
-    public int pointsToWin = 100;
+    public int maxStepsCount = 20;
 
     private SpriteRenderer[] fades = new SpriteRenderer[4];
     private bool isGridAnimating;
@@ -45,7 +45,13 @@ public partial class Match3Field : MonoBehaviour
         set
         {
             steps = value;
-            Match3Window.StepsText.text = "Steps: " + steps;
+            var left = maxStepsCount - steps;
+            Match3Window.MovesText.text = "Moves left: " + left;
+
+            if (left <= 0)
+            {
+                Match3Window.Lose();
+            }
         }
     }
     
@@ -85,7 +91,6 @@ public partial class Match3Field : MonoBehaviour
     private void OnDestroy()
     {
         Match3Window.Destroy();
-        new GoBack().Invoke();
     }
 
     private Sequence expandSequence;
@@ -150,12 +155,12 @@ public partial class Match3Field : MonoBehaviour
         float ex = (realGridSize.x + 1) / 2f;
         float ey = (realGridSize.y + 1) / 2f;
         
-        Vector2[] positions = new Vector2[]
+        Vector2[] positions = 
         {
-            new Vector2(-ex, 0),
-            new Vector2(ex, 0),
-            new Vector2(0, -ey),
-            new Vector2(0, ey),
+            new (-ex, 0),
+            new (ex, 0),
+            new (0, -ey),
+            new (0, ey),
         };
         
         for (int i = 0; i < 2; i++)
@@ -237,7 +242,7 @@ public partial class Match3Field : MonoBehaviour
                 float SpringFunction(float x)
                 {
                     float maxExtension = 2.0f;
-                    float k = 0.8f; 
+                    float k = 0.2f; 
 
                     if (Math.Abs(x) <= 1.0f)
                     {
@@ -304,11 +309,7 @@ public partial class Match3Field : MonoBehaviour
 
             Steps++;
             isGridAnimating = true;
-            tween.OnComplete(() =>
-            {
-                var set = new HashSet<Vector2Int>();
-                CheckAndDestroyChips(set);
-            });
+            tween.OnComplete(CheckAndDestroyChips);
             
             return tween;
         }
@@ -330,24 +331,14 @@ public partial class Match3Field : MonoBehaviour
     }
     
 
-    private Tween CheckAndDestroyChips(HashSet<Vector2Int> indexes)
+    private async void CheckAndDestroyChips()
     {
         isGridAnimating = true;
-        CheckAndDestroyChips(indexes, false);
-        CheckAndDestroyChips(indexes, true);
+        var sets = new List<HashSet<Vector2Int>>();
+        sets.AddRange(CheckAndDestroyChips(false));
+        sets.AddRange(CheckAndDestroyChips(true));
         
-        foreach (var index in indexes)
-        {
-            var target = grid[index.x, index.y];
-            
-            if (GoalView.Goals.TryGetValue(target.sprite, out var goal))
-            {
-                goal.Count++;
-            }
-            
-            Destroy(target.gameObject);
-            grid[index.x, index.y] = null;
-        }
+        await Dest();
 
         var isWin = GoalView.Goals.All(x => x.Value.IsReached);
 
@@ -355,25 +346,54 @@ public partial class Match3Field : MonoBehaviour
         {
             Match3Window.Win();
         }
-
-        if (indexes.Count > 0)
+        
+        if (sets.Count > 0)
         {
-            var tween = FillGrid();
-
-            tween?.OnComplete(() =>
-            {
-                isGridAnimating = false;
-                indexes.Clear();
-                CheckAndDestroyChips(indexes);
-            });
-            
-            return tween;
+           
+        }
+        else
+        {
+            isGridAnimating = false;
         }
 
-        isGridAnimating = false;
-        return null;
+        async Task Dest()
+        {
+            foreach (var set in sets)
+            {
+                if (set.Count > 0)
+                {
+                    foreach (var index in set)
+                    {
+                        var target = grid[index.x, index.y];
+            
+                        if (GoalView.Goals.TryGetValue(target.sprite, out var goal))
+                        {
+                            goal.Count++;
+                        }
+            
+                        Destroy(target.gameObject);
+                        grid[index.x, index.y] = null;
+                    }
+                    
+                    await Task.Delay(500);
+                }
+            }
+        }
     }
 
+    private Tween FillOnDestroyEnded()
+    {
+        var tween = FillGrid();
+
+        tween?.OnComplete(() =>
+        {
+            isGridAnimating = false;
+            CheckAndDestroyChips();
+        });
+            
+        return tween;
+    }
+    
     private Tween FillGrid()
     {
         var tween = DOTween.Sequence();
@@ -442,8 +462,9 @@ public partial class Match3Field : MonoBehaviour
         return null;
     }
     
-    private void CheckAndDestroyChips(HashSet<Vector2Int> indexes, bool checkRows)
+    private List<HashSet<Vector2Int>> CheckAndDestroyChips(bool checkRows)
     {
+        var list = new List<HashSet<Vector2Int>>();
         int x;
         int y = 0;
         int xCount = checkRows ? grid.GetLength(1) : grid.GetLength(0);
@@ -486,7 +507,7 @@ public partial class Match3Field : MonoBehaviour
                 if (range.y - range.x > 1)
                 {
                     range.y += 1;
-                        
+                    var indexes = new HashSet<Vector2Int>();
                     for (int k = range.x; k < range.y; k++)
                     {
                         var yc = k;
@@ -494,8 +515,24 @@ public partial class Match3Field : MonoBehaviour
                         if (checkRows) (xc, yc) = (yc, xc);
                         indexes.Add(new Vector2Int(xc, yc));
                     }
+                    list.Add(indexes);
                 }
             }
         }
+        
+        for (var i = 0; i < list.Count - 1; i++)
+        {
+            var set1 = list[i];
+            var set2 = list[i + 1];
+
+            if (set1.Overlaps(set2))
+            {
+                set1.UnionWith(set2);
+                list.RemoveAt(i + 1);
+                i--;
+            }
+        }
+        
+        return list;
     }
 }

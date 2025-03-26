@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using LSCore;
+﻿using LSCore;
 using UnityEngine;
 
 namespace Core.Match3Core
@@ -8,16 +7,18 @@ namespace Core.Match3Core
     {
         public GameObject gameScreen;
         public GameObject winScreen;
+        public GameObject loseScreen;
 
-        public LocalizationText stepsText;
+        public LocalizationText movesText;
 
-        public static LocalizationText StepsText => Instance.stepsText;
+        public static LocalizationText MovesText => Instance.movesText;
         
         public new static void Show()
         {
             BaseWindow<Match3Window>.Show(ShowWindowOption.HideAllPrevious);
             Instance.gameScreen.SetActive(true);
             Instance.winScreen.SetActive(false);
+            Instance.loseScreen.SetActive(false);
         }
 
         public static void Win()
@@ -25,6 +26,15 @@ namespace Core.Match3Core
             BaseWindow<Match3Window>.Show(ShowWindowOption.HideAllPrevious);
             Instance.gameScreen.SetActive(false);
             Instance.winScreen.SetActive(true);
+            Instance.loseScreen.SetActive(false);
+        }
+
+        public static void Lose()
+        {
+            BaseWindow<Match3Window>.Show(ShowWindowOption.HideAllPrevious);
+            Instance.gameScreen.SetActive(false);
+            Instance.winScreen.SetActive(false);
+            Instance.loseScreen.SetActive(true);
         }
 
         public static void Destroy()
