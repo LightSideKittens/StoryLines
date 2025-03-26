@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Core.Match3Core;
 using DG.Tweening;
-using DG.Tweening.Core.Easing;
 using LSCore;
 using LSCore.Async;
 using LSCore.DataStructs;
@@ -49,22 +49,6 @@ public partial class Match3Field : MonoBehaviour
         }
     }
     
-    private int points;
-
-    private int Points
-    {
-        get => points;
-        set
-        {
-            points = value;
-            Match3Window.PointsText.text = "Points: " + points;
-            if (points >= pointsToWin)
-            {
-                Match3Window.Win();
-            }
-        }
-    }
-    
     private static Match3Field instance;
     private Vector3 fieldParentScale;
     
@@ -75,7 +59,6 @@ public partial class Match3Field : MonoBehaviour
         
         Match3Window.Show();
         Steps = 0;
-        Points = 0;
         realGridSize = gridSize;
         gridSize.x += gridSizeOffset * 2;
         gridSize.y += gridSizeOffset * 2;
@@ -101,6 +84,7 @@ public partial class Match3Field : MonoBehaviour
 
     private void OnDestroy()
     {
+        Match3Window.Destroy();
         new GoBack().Invoke();
     }
 
@@ -149,6 +133,7 @@ public partial class Match3Field : MonoBehaviour
         return sequence;
     }
 
+    private Tween endTween;
     private (int index, SwipeArea.SwipeDirection direction) currentDragger;
 
     private void InitField()
@@ -230,6 +215,7 @@ public partial class Match3Field : MonoBehaviour
             var data = (index, direction);
             if(currentDragger != default && currentDragger != data) return;
 
+            endTween?.Complete();
             currentDragger = data;
             delta = GetWorldDelta(delta);
             
@@ -273,30 +259,30 @@ public partial class Match3Field : MonoBehaviour
             
             if(currentDragger != default && currentDragger != data) return;
             
-            var tween = OnEndAnim(index, delta);
+            endTween = OnEndAnim(index, delta);
             
-            if (tween == null)
+            if (endTween == null)
             {
                 isGridAnimating = true;
                 delta = GetWorldDelta(delta);
             
                 if (direction is SwipeArea.SwipeDirection.Up or SwipeArea.SwipeDirection.Down)
                 {
-                    tween = Wait.InverseRun(0.3f, x =>
+                    endTween = Wait.InverseRun(0.3f, x =>
                     {
                         DragVertical(index, delta * x);
                     }).SetEase(Ease.InOutSine);
                 }
                 else
                 {
-                    tween = Wait.InverseRun(0.3f, x =>
+                    endTween = Wait.InverseRun(0.3f, x =>
                     {
                         DragHorizontal(index, delta * x);
                     }).SetEase(Ease.InOutSine);
                 }
             }
 
-            tween.onComplete += () =>
+            endTween.onComplete += () =>
             {
                 currentDragger = default;
                 isGridAnimating = false;
@@ -352,13 +338,26 @@ public partial class Match3Field : MonoBehaviour
         
         foreach (var index in indexes)
         {
-            Destroy(grid[index.x, index.y].gameObject);
+            var target = grid[index.x, index.y];
+            
+            if (GoalView.Goals.TryGetValue(target.sprite, out var goal))
+            {
+                goal.Count++;
+            }
+            
+            Destroy(target.gameObject);
             grid[index.x, index.y] = null;
+        }
+
+        var isWin = GoalView.Goals.All(x => x.Value.IsReached);
+
+        if (isWin)
+        {
+            Match3Window.Win();
         }
 
         if (indexes.Count > 0)
         {
-            Points += indexes.Count * 10;
             var tween = FillGrid();
 
             tween?.OnComplete(() =>

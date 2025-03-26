@@ -153,7 +153,7 @@ MonoBehaviour:
   - {fileID: 533459685140509273, guid: 1dcf9060274ad1f41b651b0e0ce35f37, type: 3}
   - {fileID: 5420135064735708736, guid: b94916dee7d60274f988283713ea66ae, type: 3}
   - {fileID: 1267863140379829885, guid: 6a39b8f4cd7998a41bd99691c60fb230, type: 3}
-  - {fileID: 8862249399163411322, guid: 6fda5993a1c01494cb712690a156abf5, type: 3}
+  - {fileID: 6556543514602532770, guid: b58d2558ab77c2342a6942100be8c729, type: 3}
   configName: SayaStory
   startBranchAction:
     id: 97421e2ef0f240968b4e7bedcdd3b767
@@ -166,8 +166,8 @@ MonoBehaviour:
         sceneRef:
           m_AssetGUID: 90e22592787d561488439dccc5c46f89
           m_SubObjectName: 
-          m_SubObjectGUID: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 1
         onSuccess: []
     - key: Saya_ChooseAnotherBranch
@@ -176,8 +176,8 @@ MonoBehaviour:
         sceneRef:
           m_AssetGUID: 90e22592787d561488439dccc5c46f89
           m_SubObjectName: 
-          m_SubObjectGUID: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 1
         onSuccess: []
     - key: AuraBranch_1
@@ -186,8 +186,8 @@ MonoBehaviour:
         sceneRef:
           m_AssetGUID: 0e6a8b3cab659ec48ba87baa38e34ce2
           m_SubObjectName: 
-          m_SubObjectGUID: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 1
         onSuccess: []
     - key: JackBranch_1
@@ -196,8 +196,8 @@ MonoBehaviour:
         sceneRef:
           m_AssetGUID: 4937a3b3906ac0b4a97398d49a8a651a
           m_SubObjectName: 
-          m_SubObjectGUID: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 1
         onSuccess: []
     - key: FoxyBranch_1
@@ -206,8 +206,8 @@ MonoBehaviour:
         sceneRef:
           m_AssetGUID: 9c26a330170b0594db5b4211bfe233d1
           m_SubObjectName: 
-          m_SubObjectGUID: 
           m_SubObjectType: 
+          m_SubObjectGUID: 
           m_EditorAssetChanged: 1
         onSuccess: []
   references:
