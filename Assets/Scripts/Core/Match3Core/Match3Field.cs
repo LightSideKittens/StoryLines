@@ -2,12 +2,15 @@ using System;
 using System.Collections.Generic;
 using Core.Match3Core;
 using DG.Tweening;
+using DG.Tweening.Core.Easing;
 using LSCore;
+using LSCore.Async;
 using LSCore.DataStructs;
 using LSCore.Extensions;
+using LSCore.Extensions.Unity;
 using UnityEngine;
 
-public class Match3Field : MonoBehaviour 
+public partial class Match3Field : MonoBehaviour 
 {
     [Serializable]
     public class ExpandMask : LSAction
@@ -34,7 +37,6 @@ public class Match3Field : MonoBehaviour
     private Vector2Int realGridSize;
     private SpriteRenderer[,] fullGrid;
     private ArraySpan<SpriteRenderer> grid;
-    private float lastCameraSize;
     private int steps;
 
     private int Steps
@@ -64,12 +66,12 @@ public class Match3Field : MonoBehaviour
     }
     
     private static Match3Field instance;
+    private Vector3 fieldParentScale;
     
     private void Awake()
     {
+        fieldParent = new GameObject("FieldParent");
         instance = this;
-        lastCameraSize = Camera.main.orthographicSize;
-        Camera.main.orthographicSize = gridSize.x + 2;
         
         Match3Window.Show();
         Steps = 0;
@@ -81,7 +83,7 @@ public class Match3Field : MonoBehaviour
         fullGrid = new SpriteRenderer[gridSize.x, gridSize.y];
         grid = fullGrid.ToSpan(gridSizeOffset..(gridSize.x - gridSizeOffset), gridSizeOffset..(gridSize.y - gridSizeOffset));
 
-        fieldParent = new GameObject("FieldParent");
+        
         InitField();
         transform.position = -new Vector3(gridSize.x / 2f - 0.5f, gridSize.y / 2f - 0.5f);
         transform.SetParent(fieldParent.transform);
@@ -90,12 +92,16 @@ public class Match3Field : MonoBehaviour
             masks[i].transform.SetParent(fieldParent.transform);
             masks[i].size = new Vector2(realGridSize.x / 2f, realGridSize.y) + maskSizeOffset;
         }
+        
+
+        var cam = Camera.main;
+        fieldParent.transform.localScale *= (cam.aspect * 2 * (cam.orthographicSize * 0.9f)) / (realGridSize.x);
+        fieldParentScale = fieldParent.transform.localScale;
     }
 
     private void OnDestroy()
     {
         new GoBack().Invoke();
-        Camera.main.orthographicSize = lastCameraSize;
     }
 
     private Sequence expandSequence;
@@ -119,7 +125,7 @@ public class Match3Field : MonoBehaviour
         {
             var sequence = DOTween.Sequence();
             sequence.Append(SetHintChipsAlpha(1, 0));
-            sequence.Append(fieldParent.transform.DOScale(Vector3.one * factor, .3f));
+            sequence.Append(fieldParent.transform.DOScale(fieldParentScale * factor, .3f));
             for (var i = 0; i < masks.Length; i++)
             {
                 sequence.Insert(0.3f, masks[i].DOSize(new Vector2((realGridSize.x + expand.x) / 2f, realGridSize.y + expand.y) + maskSizeOffset, 0.3f));
@@ -142,6 +148,8 @@ public class Match3Field : MonoBehaviour
         
         return sequence;
     }
+
+    private (int index, SwipeArea.SwipeDirection direction) currentDragger;
 
     private void InitField()
     {
@@ -213,135 +221,128 @@ public class Match3Field : MonoBehaviour
         
         foreach (var dragger in draggers)
         {
+            dragger.Dragging += OnDragging;
             dragger.Swiped += OnEnd;
         }
-        
-        void OnEnd(int index, SwipeArea.SwipeDirection direction)
-        {
-            if(isGridAnimating) return;
-            
-            Tween tween = direction switch
-            {
-                SwipeArea.SwipeDirection.Up => SwipeVertical(index, true),
-                SwipeArea.SwipeDirection.Down => SwipeVertical(index, false),
-                SwipeArea.SwipeDirection.Right => SwipeHorizontal(index, true),
-                SwipeArea.SwipeDirection.Left => SwipeHorizontal(index, false),
-                SwipeArea.SwipeDirection.None => null,
-            };
 
-            if (direction != SwipeArea.SwipeDirection.None)
+        void OnDragging(int index, SwipeArea.SwipeDirection direction, Vector2 delta)
+        {
+            var data = (index, direction);
+            if(currentDragger != default && currentDragger != data) return;
+
+            currentDragger = data;
+            delta = GetWorldDelta(delta);
+            
+            if (direction is SwipeArea.SwipeDirection.Up or SwipeArea.SwipeDirection.Down)
             {
-                Steps++;
-                isGridAnimating = true;
-                tween.OnComplete(() =>
-                {
-                    var set = new HashSet<Vector2Int>();
-                    CheckAndDestroyChips(set);
-                });
+                DragVertical(index, ElasticClamp(delta));
             }
             else
             {
-                isGridAnimating = false;
+                DragHorizontal(index, ElasticClamp(delta));
+            }
+            Vector2 ElasticClamp(Vector2 value)
+            {
+                value.x = SpringFunction(value.x);
+                value.y = SpringFunction(value.y);
+
+                return value;
+                
+                float SpringFunction(float x)
+                {
+                    float maxExtension = 2.0f;
+                    float k = 0.8f; 
+
+                    if (Math.Abs(x) <= 1.0f)
+                    {
+                        return x;
+                    }
+                    if (x > 1)
+                    {
+                        return 1 + (maxExtension - 1) * (1 - Mathf.Exp(-k * (x - 1)));
+                    }
+                    
+                    return -1 - (maxExtension - 1) * (1 - Mathf.Exp(-k * (-x - 1)));
+                }
             }
         }
+
+        void OnEnd(int index, SwipeArea.SwipeDirection direction, Vector2 delta)
+        {
+            var data = (index, direction);
+            
+            if(currentDragger != default && currentDragger != data) return;
+            
+            var tween = OnEndAnim(index, delta);
+            
+            if (tween == null)
+            {
+                isGridAnimating = true;
+                delta = GetWorldDelta(delta);
+            
+                if (direction is SwipeArea.SwipeDirection.Up or SwipeArea.SwipeDirection.Down)
+                {
+                    tween = Wait.InverseRun(0.3f, x =>
+                    {
+                        DragVertical(index, delta * x);
+                    }).SetEase(Ease.InOutSine);
+                }
+                else
+                {
+                    tween = Wait.InverseRun(0.3f, x =>
+                    {
+                        DragHorizontal(index, delta * x);
+                    }).SetEase(Ease.InOutSine);
+                }
+            }
+
+            tween.onComplete += () =>
+            {
+                currentDragger = default;
+                isGridAnimating = false;
+            };
+        }
+
+        Tween OnEndAnim(int index, Vector2 delta)
+        {
+            delta = GetWorldDelta(delta);
+            if (Mathf.Abs(delta.x) < 0.5f && Mathf.Abs(delta.y) < 0.5f) return null;
+            if(isGridAnimating) return null;
+            
+            Tween tween = null;
+
+            if (delta.x > 0) tween = SwipeHorizontal(index, true);
+            if (delta.x < 0) tween = SwipeHorizontal(index, false);
+            if (delta.y > 0) tween = SwipeVertical(index, true);
+            if (delta.y < 0) tween = SwipeVertical(index, false);
+
+            Steps++;
+            isGridAnimating = true;
+            tween.OnComplete(() =>
+            {
+                var set = new HashSet<Vector2Int>();
+                CheckAndDestroyChips(set);
+            });
+            
+            return tween;
+        }
+    }
+
+    private Vector2 GetWorldDelta(Vector2 delta)
+    {
+        delta = Camera.main.ScreenToWorldDelta(delta);
+        delta = transform.localScale * delta;
+        return delta;
     }
 
     private SpriteRenderer GetRandomChip() => chips.Random();
-    private SpriteRenderer CreateRandomChip() => Instantiate(GetRandomChip(), transform);
-
-    private Tween SwipeVertical(int index, bool up)
+    private SpriteRenderer CreateRandomChip()
     {
-        var sequence = DOTween.Sequence();
-        if (up)
-        {
-            var lastIndex = fullGrid.GetLength(1) - 1;
-            var toDestroy = fullGrid[index, lastIndex];
-            var tween = toDestroy.transform.DOLocalMove(Vector3.up, 0.3f).SetRelative(true);
-            sequence.Insert(0, tween);
-            
-            for (int i = lastIndex; i >= 1; i--)
-            {
-                fullGrid[index, i] = fullGrid[index, i - 1];
-                tween = fullGrid[index, i - 1].transform.DOLocalMove(Vector3.up, 0.3f).SetRelative(true);
-                sequence.Insert(0, tween);
-            }
-            
-            fullGrid[index, 0] = CreateRandomChip();
-            fullGrid[index, 0].transform.localPosition = new(index, -1);
-            var tween2 = fullGrid[index, 0].transform.DOLocalMove(new(index, 0), 0.3f)
-                .OnComplete(() => Destroy(toDestroy.gameObject));
-            sequence.Insert(0, tween2);
-        }
-        else
-        {
-            var lastIndex = fullGrid.GetLength(1) - 1;
-            var toDestroy = fullGrid[index, 0];
-            var tween = toDestroy.transform.DOLocalMove(Vector3.down, 0.3f).SetRelative(true);
-            sequence.Insert(0, tween);
-            
-            for (int i = 0; i < lastIndex; i++)
-            {
-                fullGrid[index, i] = fullGrid[index, i + 1];
-                tween = fullGrid[index, i + 1].transform.DOLocalMove(Vector3.down, 0.3f).SetRelative(true);
-                sequence.Insert(0, tween);
-            }
-
-            fullGrid[index, lastIndex] = CreateRandomChip();
-            fullGrid[index, lastIndex].transform.localPosition = new(index, lastIndex + 1);
-            var tween2 = fullGrid[index, lastIndex].transform.DOLocalMove(new(index, lastIndex), 0.3f)
-                .OnComplete(() => Destroy(toDestroy.gameObject));
-            sequence.Insert(0, tween2);
-        }
-        
-        return sequence;
+        var chip = Instantiate(GetRandomChip(), transform);
+        chip.maskInteraction = SpriteMaskInteraction.VisibleInsideMask;
+        return chip;
     }
-
-    private Tween SwipeHorizontal(int index, bool right)
-    {
-        var sequence = DOTween.Sequence();
-        if (right)
-        {
-            var lastIndex = fullGrid.GetLength(0) - 1;
-            var toDestroy = fullGrid[lastIndex, index];
-            var tween = toDestroy.transform.DOLocalMove(Vector3.right, 0.3f).SetRelative(true);
-            sequence.Insert(0, tween);
-            
-            for (int i = lastIndex; i >= 1; i--)
-            {
-                fullGrid[i, index] = fullGrid[i - 1, index]; 
-                tween = fullGrid[i - 1, index].transform.DOLocalMove(Vector3.right, 0.3f).SetRelative(true);
-                sequence.Insert(0, tween);
-            }
-            
-            fullGrid[0, index] = CreateRandomChip();
-            fullGrid[0, index].transform.localPosition = new(-1, index);
-            var tween2 = fullGrid[0, index].transform.DOLocalMove(new(0, index), 0.3f)
-                .OnComplete(() => Destroy(toDestroy.gameObject));
-            sequence.Insert(0, tween2);
-        }
-        else
-        {
-            var lastIndex = fullGrid.GetLength(0) - 1;
-            var toDestroy = fullGrid[0, index];
-            var tween = toDestroy.transform.DOLocalMove(Vector3.left, 0.3f).SetRelative(true);
-            sequence.Insert(0, tween);
-            
-            for (int i = 0; i < lastIndex; i++)
-            {
-                fullGrid[i, index] = fullGrid[i + 1, index];
-                tween = fullGrid[i + 1, index].transform.DOLocalMove(Vector3.left, 0.3f).SetRelative(true);
-                sequence.Insert(0, tween);
-            }
-            
-            fullGrid[lastIndex, index] = CreateRandomChip();
-            fullGrid[lastIndex, index].transform.localPosition = new(lastIndex + 1, index);
-            var tween2 = fullGrid[lastIndex, index].transform.DOLocalMove(new(lastIndex, index), 0.3f)
-                .OnComplete(() => Destroy(toDestroy.gameObject));
-            sequence.Insert(0, tween2);
-        }
-        
-        return sequence;
-    }
+    
 
     private Tween CheckAndDestroyChips(HashSet<Vector2Int> indexes)
     {
@@ -378,11 +379,11 @@ public class Match3Field : MonoBehaviour
     {
         var tween = DOTween.Sequence();
         
-        for (int x = 0; x < grid.GetLength(0); x++)
+        for (int x = 0; x < fullGrid.GetLength(0); x++)
         {
-            for (int y = 0; y < grid.GetLength(1); y++)
+            for (int y = 0; y < fullGrid.GetLength(1); y++)
             {
-                var target = grid[x, y];
+                var target = fullGrid[x, y];
                 if (target != null)
                 {
                     int yy = y;
@@ -391,11 +392,11 @@ public class Match3Field : MonoBehaviour
                     
                     for (int i = y - 1; i >= 0; i--)
                     {
-                        if (grid[x, i] == null)
+                        if (fullGrid[x, i] == null)
                         {
-                            (grid[x, yy], grid[x, i]) = (grid[x, i], grid[x, yy]);
+                            (fullGrid[x, yy], fullGrid[x, i]) = (fullGrid[x, i], fullGrid[x, yy]);
                             yy--;
-                            pos = new Vector3(x + gridSizeOffset, i + gridSizeOffset);
+                            pos = new Vector3(x, i);
                             needMove = true;
                         }
                         else
@@ -414,15 +415,15 @@ public class Match3Field : MonoBehaviour
             int startY = 0;
             Action setPos = null;
             
-            for (int y = grid.GetLength(1) - 1; y >= 0; y--)
+            for (int y = fullGrid.GetLength(1) - 1; y >= 0; y--)
             {
-                var target = grid[x, y];
+                var target = fullGrid[x, y];
                 if (target != null) break;
 
-                startY = grid.GetLength(1) - y;
-                grid[x, y] = CreateRandomChip();
-                target = grid[x, y];
-                var pos = new Vector3(x + gridSizeOffset, y + gridSizeOffset);
+                startY = fullGrid.GetLength(1) - y;
+                fullGrid[x, y] = CreateRandomChip();
+                target = fullGrid[x, y];
+                var pos = new Vector3(x, y);
                 
                 setPos += () => 
                 {

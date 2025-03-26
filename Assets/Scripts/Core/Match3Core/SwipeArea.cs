@@ -14,14 +14,16 @@ public class SwipeArea : MonoBehaviour
         Left,
     }
     
-    public float threshold = 100f;
+    public float threshold = 10f;
     public bool isVertical;
     public int index;
     
     private bool isDragging = false;
     private Vector3 offset;
     private Vector2 startTouchPos;
-    public event Action<int, SwipeDirection> Swiped;
+    private SwipeDirection currentSwipeDirection = SwipeDirection.None;
+    public event Action<int, SwipeDirection, Vector2> Dragging;
+    public event Action<int, SwipeDirection, Vector2> Swiped;
     private Collider2D col2D;
 
     private void Start()
@@ -47,18 +49,35 @@ public class SwipeArea : MonoBehaviour
                 case TouchPhase.Moved:
                     if (isDragging)
                     {
-                        var dir = touch.position - startTouchPos;
-
-                        if (dir.magnitude > threshold)
+                        var delta = touch.position - startTouchPos;
+                        
+                        if (currentSwipeDirection == SwipeDirection.None)
                         {
-                            isDragging = false;
-                            Swiped?.Invoke(index, GetSwipeDirection(dir));
+                            if (delta.magnitude > threshold)
+                            {
+                                startTouchPos = touch.position;
+                                currentSwipeDirection = GetSwipeDirection(delta);
+                            }
+                        }
+                        else
+                        {
+                            Dragging?.Invoke(index, currentSwipeDirection, ClampDeltaByDirection(delta, currentSwipeDirection));
                         }
                     }
                     break;
 
                 case TouchPhase.Ended:
+                    if (isDragging)
+                    {
+                        var dir = touch.position - startTouchPos;
+                        Swiped?.Invoke(index, currentSwipeDirection, ClampDeltaByDirection(dir, currentSwipeDirection));
+                        isDragging = false;
+                        currentSwipeDirection = SwipeDirection.None;
+                    }
+
+                    break;
                 case TouchPhase.Canceled:
+                    currentSwipeDirection = SwipeDirection.None;
                     isDragging = false;
                     break;
             }
@@ -95,5 +114,24 @@ public class SwipeArea : MonoBehaviour
         }
 
         return SwipeDirection.None;
+    }
+
+    private Vector2 ClampDeltaByDirection(Vector2 delta, SwipeDirection swipeDirection)
+    {
+        if (swipeDirection == SwipeDirection.None)
+        {
+            return delta;
+        }
+        
+        if (swipeDirection is SwipeDirection.Up or SwipeDirection.Down)
+        {
+            delta.x = 0;
+        }
+        else
+        {
+            delta.y = 0;
+        }
+        
+        return delta;
     }
 }
