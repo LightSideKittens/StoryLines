@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Core.Match3Core;
 using DG.Tweening;
+using LSCore;
 using LSCore.Async;
 using LSCore.DataStructs;
 using LSCore.Extensions;
@@ -98,7 +99,7 @@ public partial class Match3Field : MonoBehaviour
 
     private void OnDestroy()
     {
-        Match3Window.Destroy();
+       new GoBack().Invoke();
     }
 
     private void InitExpandedIndexes()
