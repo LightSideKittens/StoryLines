@@ -521,6 +521,7 @@ public partial class Match3Field : MonoBehaviour
 
                 startY = fullGrid.GetLength(1) - y;
                 fullGrid[x, y] = CreateRandomChip();
+                FadeChip(new Vector2Int(x, y), null);
                 target = fullGrid[x, y];
                 var pos = new Vector3(x, y);
                 
