@@ -8,6 +8,7 @@ using LSCore.Async;
 using LSCore.DataStructs;
 using LSCore.Extensions;
 using LSCore.Extensions.Unity;
+using Sirenix.Utilities;
 using UnityEngine;
 
 public partial class Match3Field : MonoBehaviour 
@@ -26,16 +27,17 @@ public partial class Match3Field : MonoBehaviour
     public Vector2Int gridSize;
     public List<SpriteRenderer> chips;
     public SpriteRenderer[] masks;
-    public SpriteRenderer fadePrefab;
     public Vector2 maskSizeOffset;
     public int maxStepsCount = 20;
     public ParticleSystem fx;
 
+    private HashSet<Vector2Int> expandedMaskIndexes = new();
+    private HashSet<Vector2Int> outerMaskIndexes = new();
+    private HashSet<Vector2Int> playGridIndexes = new();
     private Vector2Int gridSizeOffset;
-    private SpriteRenderer[] fades = new SpriteRenderer[4];
     private bool isGridAnimating;
     private GameObject fieldParent;
-    private Vector2Int realGridSize;
+    private Vector2Int playGridSize;
     private SpriteRenderer[,] fullGrid;
     private ArraySpan<SpriteRenderer> grid;
     private int steps;
@@ -66,7 +68,7 @@ public partial class Match3Field : MonoBehaviour
         
         Match3Window.Show();
         Steps = 0;
-        realGridSize = gridSize;
+        playGridSize = gridSize;
         gridSizeOffset = gridSize;
         gridSizeOffset -= Vector2Int.one;
         gridSize.x += gridSizeOffset.x * 2;
@@ -74,20 +76,25 @@ public partial class Match3Field : MonoBehaviour
         
         fullGrid = new SpriteRenderer[gridSize.x, gridSize.y];
         grid = fullGrid.ToSpan(gridSizeOffset.x..(gridSize.x - gridSizeOffset.x), gridSizeOffset.y..(gridSize.y - gridSizeOffset.y));
-
         
+        InitExpandedIndexes();
+        InitOuterMaskIndexes();
         InitField();
+        
+        SetFade(expandedMaskIndexes, 0);
+        SetFade(outerMaskIndexes, 0);
+        SetFade(playGridIndexes, 1);
+        
         transform.position = -new Vector3(gridSize.x / 2f - 0.5f, gridSize.y / 2f - 0.5f);
         transform.SetParent(fieldParent.transform);
         for (var i = 0; i < masks.Length; i++)
         {
             masks[i].transform.SetParent(fieldParent.transform);
-            masks[i].size = new Vector2(realGridSize.x / 2f, realGridSize.y) + maskSizeOffset;
+            masks[i].size = new Vector2(playGridSize.x / 2f, playGridSize.y) + maskSizeOffset;
         }
         
-
         var cam = Camera.main;
-        fieldParent.transform.localScale *= (cam.aspect * 2 * (cam.orthographicSize * 0.9f)) / (realGridSize.x);
+        fieldParent.transform.localScale *= (cam.aspect * 2 * (cam.orthographicSize * 0.9f)) / (playGridSize.x);
         fieldParentScale = fieldParent.transform.localScale;
     }
 
@@ -96,12 +103,68 @@ public partial class Match3Field : MonoBehaviour
         Match3Window.Destroy();
     }
 
+    private void InitExpandedIndexes()
+    {
+        HashSet<Vector2Int> outline = expandedMaskIndexes;
+
+        int startRow = gridSizeOffset.x - 1;
+        int startCol = gridSizeOffset.y - 1;
+        int endRow = startRow + playGridSize.x + 1;
+        int endCol = startCol + playGridSize.y + 1;
+        
+        for (int c = startCol; c <= endCol; c++)
+            outline.Add(new Vector2Int(startRow, c));
+
+        for (int r = startRow + 1; r < endRow; r++)
+            outline.Add(new Vector2Int(r, endCol));
+        
+        for (int c = endCol; c >= startCol; c--)
+            outline.Add(new Vector2Int(endRow, c));
+
+        for (int r = endRow - 1; r > startRow; r--)
+            outline.Add(new Vector2Int(r, startCol));
+    }
+    
+    private void InitOuterMaskIndexes()
+    {
+        HashSet<Vector2Int> outline = outerMaskIndexes;
+
+        for (int i = 0; i < gridSize.x; i++)
+        {
+            for (int j = 0; j < gridSize.y; j++)
+            {
+                outline.Add(new Vector2Int(i, j));
+            }
+        }
+        
+        for (int i = gridSizeOffset.x; i < gridSizeOffset.x + playGridSize.x; i++)
+        {
+            for (int j = gridSizeOffset.y; j < gridSizeOffset.y + playGridSize.y; j++)
+            {
+                var index = new Vector2Int(i, j);
+                playGridIndexes.Add(index);
+                outline.Remove(index);
+            }
+        }
+        
+        playGridIndexes.ExceptWith(expandedMaskIndexes);
+        outline.ExceptWith(expandedMaskIndexes);
+    }
+
+    private void SetFade(HashSet<Vector2Int> indexes, float fade)
+    {
+        foreach (var index in indexes)
+        {
+            fullGrid[index.x, index.y].Alpha(fade);
+        }
+    }
+
     private Sequence expandSequence;
     private float lastFactor;
     
     public void ExpandMaskSize(Vector2Int expand)
     {
-        var factor = (float)realGridSize.x / (realGridSize.x + expand.x);
+        var factor = (float)playGridSize.x / (playGridSize.x + expand.x);
         
         if (expand.x == 0)
         {
@@ -116,29 +179,26 @@ public partial class Match3Field : MonoBehaviour
         Sequence GetAnim()
         {
             var sequence = DOTween.Sequence();
-            sequence.Append(SetHintChipsAlpha(1, 0));
+            sequence.Append(SetHintChipsAlpha(expandedMaskIndexes, 0, 0, 0));
             sequence.Append(fieldParent.transform.DOScale(fieldParentScale * factor, .3f));
+            
             for (var i = 0; i < masks.Length; i++)
             {
-                sequence.Insert(0.3f, masks[i].DOSize(new Vector2((realGridSize.x + expand.x) / 2f, realGridSize.y + expand.y) + maskSizeOffset, 0.3f));
+                sequence.Insert(0.3f, masks[i].DOSize(new Vector2((playGridSize.x + expand.x) / 2f, playGridSize.y + expand.y) + maskSizeOffset, 0.3f));
             }
 
-            sequence.Append(SetHintChipsAlpha(0.85f, 0.5f));
+            sequence.Append(SetHintChipsAlpha(expandedMaskIndexes, 0, 0.15f, 0.5f));
             
             return sequence.SetAutoKill(false);
         }
     }
 
-    private Tween SetHintChipsAlpha(float alpha, float duration)
+    private Tween SetHintChipsAlpha(HashSet<Vector2Int> indexes, float from, float to, float duration)
     {
-        var sequence = DOTween.Sequence();
-        
-        for (var i = 0; i < fades.Length; i++)
+        return Wait.FromTo(from, to, duration, x =>
         {
-            sequence.Insert(0, fades[i].DOFade(alpha, duration));
-        }
-        
-        return sequence;
+            SetFade(indexes, x);
+        });
     }
 
     private Tween endTween;
@@ -155,31 +215,6 @@ public partial class Match3Field : MonoBehaviour
             }
         }
         
-        float ex = (realGridSize.x + 1) / 2f;
-        float ey = (realGridSize.y + 1) / 2f;
-        
-        Vector2[] positions = 
-        {
-            new (-ex, 0),
-            new (ex, 0),
-            new (0, -ey),
-            new (0, ey),
-        };
-        
-        for (int i = 0; i < 2; i++)
-        {
-            var fade = Instantiate(fadePrefab, fieldParent.transform);
-            fade.transform.localPosition = positions[i];
-            fades[i] = fade;
-        }
-        
-        for (int i = 2; i < 4; i++)
-        {
-            var fade = Instantiate(fadePrefab, Vector3.zero, Quaternion.Euler(0, 0, 90), fieldParent.transform);
-            fade.transform.localPosition = positions[i];
-            fades[i] = fade;
-        }
-        
         var swipeAreas = new List<SwipeArea>();
         
         for (var x = gridSizeOffset.x; x < fullGrid.GetLength(0) - gridSizeOffset.x; x++)
@@ -193,8 +228,8 @@ public partial class Match3Field : MonoBehaviour
             swipeArea.index = x;
             swipeArea.isVertical = true;
             
-            boxCollider.size = new Vector2(1, realGridSize.y);
-            boxCollider.offset = new Vector3(x, realGridSize.y / 2f - 0.5f + gridSizeOffset.y);
+            boxCollider.size = new Vector2(1, playGridSize.y);
+            boxCollider.offset = new Vector3(x, playGridSize.y / 2f - 0.5f + gridSizeOffset.y);
         }
         
         for (var y = gridSizeOffset.y; y < fullGrid.GetLength(1) - gridSizeOffset.y; y++)
@@ -208,8 +243,8 @@ public partial class Match3Field : MonoBehaviour
             swipeArea.index = y;
             swipeArea.isVertical = false;
             
-            boxCollider.size = new Vector2(realGridSize.x, 1);
-            boxCollider.offset = new Vector3(realGridSize.x / 2f - 0.5f + gridSizeOffset.x, y);
+            boxCollider.size = new Vector2(playGridSize.x, 1);
+            boxCollider.offset = new Vector3(playGridSize.x / 2f - 0.5f + gridSizeOffset.x, y);
         }
         
         foreach (var dragger in swipeAreas)
@@ -287,7 +322,32 @@ public partial class Match3Field : MonoBehaviour
                 }).SetEase(Ease.InOutSine);
             }
                 
-            endTween.onComplete += CheckAndDestroyChips;
+            endTween.onComplete += () =>
+            {
+                var sets = new List<HashSet<Vector2Int>>();
+                CheckAndDestroyChips(sets);
+                var set = new HashSet<Vector2Int>();
+                
+                for (int i = 0; i < sets.Count; i++)
+                {
+                    set.AddRange(sets[i]);
+                }
+                
+                if (direction is SwipeArea.SwipeDirection.Up or SwipeArea.SwipeDirection.Down)
+                {
+                    for (int i = 0; i < gridSize.y; i++)
+                    {
+                        FadeChip(new Vector2Int(index, i), set);
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i < gridSize.x; i++)
+                    {
+                        FadeChip(new Vector2Int(i, index), set);
+                    }
+                }
+            };
         }
 
         void Swipe(int index, ref Vector2 delta)
@@ -299,6 +359,31 @@ public partial class Match3Field : MonoBehaviour
             if (delta.y != 0) SwipeVertical(index, ref delta);
 
             Steps++;
+        }
+    }
+
+    private void FadeChip(Vector2Int pos, HashSet<Vector2Int> ignored)
+    {
+        if(ignored != null && ignored.Contains(pos)) return;
+                    
+        if (expandedMaskIndexes.Contains(pos))
+        {
+            float fade = 0;
+                        
+            if (expandSequence != null)
+            {
+                fade = expandSequence.isBackwards ? 0.15f : 0;
+            }
+                        
+            fullGrid[pos.x, pos.y].DOFade(fade, 0.3f);
+        }
+        else if(playGridIndexes.Contains(pos))
+        {
+            fullGrid[pos.x, pos.y].DOFade(1f, 0.3f);
+        }
+        else if(outerMaskIndexes.Contains(pos))
+        {
+            fullGrid[pos.x, pos.y].Alpha(0);
         }
     }
 
@@ -316,12 +401,15 @@ public partial class Match3Field : MonoBehaviour
         chip.maskInteraction = SpriteMaskInteraction.VisibleInsideMask;
         return chip;
     }
-    
 
-    private async void CheckAndDestroyChips()
+    private void CheckAndDestroyChips()
+    {
+        CheckAndDestroyChips(new List<HashSet<Vector2Int>>());
+    }
+
+    private async void CheckAndDestroyChips(List<HashSet<Vector2Int>> sets)
     {
         isGridAnimating = true;
-        var sets = new List<HashSet<Vector2Int>>();
         sets.AddRange(CheckAndDestroyChips(false));
         sets.AddRange(CheckAndDestroyChips(true));
         
@@ -417,6 +505,7 @@ public partial class Match3Field : MonoBehaviour
 
                     if (needMove)
                     {
+                        FadeChip(new Vector2Int((int)pos.x, (int)pos.y), null);
                         tween.Insert(0, target.transform.DOLocalMove(pos, 0.3f));
                     }
                 }
