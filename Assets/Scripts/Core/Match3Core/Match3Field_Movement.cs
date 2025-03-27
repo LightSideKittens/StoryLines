@@ -40,6 +40,7 @@ public partial class Match3Field
     private void SwipeHorizontal(int index, ref Vector2 delta)
     {
         var list = new List<SpriteRenderer>();
+        
         for (int i = 0; i < fullGrid.GetLength(0); i++)
         {
             list.Add(fullGrid[i, index]);
@@ -75,7 +76,7 @@ public partial class Match3Field
     {
         var lastIndex = fullGrid.GetLength(1) - 1;
             
-        for (int i = lastIndex; i >= 1; i--)
+        for (int i = lastIndex; i >= 0; i--)
         {
             var pos = new Vector2(index, i);
             fullGrid[index, i].transform.localPosition = pos + delta;
@@ -86,7 +87,7 @@ public partial class Match3Field
     {
         var lastIndex = fullGrid.GetLength(0) - 1;
             
-        for (int i = lastIndex; i >= 1; i--)
+        for (int i = lastIndex; i >= 0; i--)
         {
             var pos = new Vector2(i, index);
             fullGrid[i, index].transform.localPosition = pos + delta;

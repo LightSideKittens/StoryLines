@@ -29,12 +29,12 @@ public partial class Match3Field : MonoBehaviour
     public SpriteRenderer[] masks;
     public Vector2 maskSizeOffset;
     public int maxStepsCount = 20;
+    public int gridSizeOffset = 3;
     public ParticleSystem fx;
 
     private HashSet<Vector2Int> expandedMaskIndexes = new();
     private HashSet<Vector2Int> outerMaskIndexes = new();
     private HashSet<Vector2Int> playGridIndexes = new();
-    private Vector2Int gridSizeOffset;
     private bool isGridAnimating;
     private GameObject fieldParent;
     private Vector2Int playGridSize;
@@ -69,13 +69,11 @@ public partial class Match3Field : MonoBehaviour
         Match3Window.Show();
         Steps = 0;
         playGridSize = gridSize;
-        gridSizeOffset = gridSize;
-        gridSizeOffset -= Vector2Int.one;
-        gridSize.x += gridSizeOffset.x * 2;
-        gridSize.y += gridSizeOffset.y * 2;
+        gridSize.x += gridSizeOffset * 2;
+        gridSize.y += gridSizeOffset * 2;
         
         fullGrid = new SpriteRenderer[gridSize.x, gridSize.y];
-        grid = fullGrid.ToSpan(gridSizeOffset.x..(gridSize.x - gridSizeOffset.x), gridSizeOffset.y..(gridSize.y - gridSizeOffset.y));
+        grid = fullGrid.ToSpan(gridSizeOffset..(gridSize.x - gridSizeOffset), gridSizeOffset..(gridSize.y - gridSizeOffset));
         
         InitExpandedIndexes();
         InitOuterMaskIndexes();
@@ -107,8 +105,8 @@ public partial class Match3Field : MonoBehaviour
     {
         HashSet<Vector2Int> outline = expandedMaskIndexes;
 
-        int startRow = gridSizeOffset.x - 1;
-        int startCol = gridSizeOffset.y - 1;
+        int startRow = gridSizeOffset - 1;
+        int startCol = gridSizeOffset - 1;
         int endRow = startRow + playGridSize.x + 1;
         int endCol = startCol + playGridSize.y + 1;
         
@@ -137,9 +135,9 @@ public partial class Match3Field : MonoBehaviour
             }
         }
         
-        for (int i = gridSizeOffset.x; i < gridSizeOffset.x + playGridSize.x; i++)
+        for (int i = gridSizeOffset; i < gridSizeOffset + playGridSize.x; i++)
         {
-            for (int j = gridSizeOffset.y; j < gridSizeOffset.y + playGridSize.y; j++)
+            for (int j = gridSizeOffset; j < gridSizeOffset + playGridSize.y; j++)
             {
                 var index = new Vector2Int(i, j);
                 playGridIndexes.Add(index);
@@ -217,7 +215,7 @@ public partial class Match3Field : MonoBehaviour
         
         var swipeAreas = new List<SwipeArea>();
         
-        for (var x = gridSizeOffset.x; x < fullGrid.GetLength(0) - gridSizeOffset.x; x++)
+        for (var x = gridSizeOffset; x < fullGrid.GetLength(0) - gridSizeOffset; x++)
         {
             var go = new GameObject($"Dragger Vertical {x}");
             var boxCollider = go.AddComponent<BoxCollider2D>();
@@ -229,10 +227,10 @@ public partial class Match3Field : MonoBehaviour
             swipeArea.isVertical = true;
             
             boxCollider.size = new Vector2(1, playGridSize.y);
-            boxCollider.offset = new Vector3(x, playGridSize.y / 2f - 0.5f + gridSizeOffset.y);
+            boxCollider.offset = new Vector3(x, playGridSize.y / 2f - 0.5f + gridSizeOffset);
         }
         
-        for (var y = gridSizeOffset.y; y < fullGrid.GetLength(1) - gridSizeOffset.y; y++)
+        for (var y = gridSizeOffset; y < fullGrid.GetLength(1) - gridSizeOffset; y++)
         {
             var go = new GameObject($"Dragger Horizontal {y}");
             var boxCollider = go.AddComponent<BoxCollider2D>();
@@ -244,7 +242,7 @@ public partial class Match3Field : MonoBehaviour
             swipeArea.isVertical = false;
             
             boxCollider.size = new Vector2(playGridSize.x, 1);
-            boxCollider.offset = new Vector3(playGridSize.x / 2f - 0.5f + gridSizeOffset.x, y);
+            boxCollider.offset = new Vector3(playGridSize.x / 2f - 0.5f + gridSizeOffset, y);
         }
         
         foreach (var dragger in swipeAreas)
@@ -398,6 +396,7 @@ public partial class Match3Field : MonoBehaviour
     private SpriteRenderer CreateRandomChip()
     {
         var chip = Instantiate(GetRandomChip(), transform);
+        chip.Alpha(0);
         chip.maskInteraction = SpriteMaskInteraction.VisibleInsideMask;
         return chip;
     }
