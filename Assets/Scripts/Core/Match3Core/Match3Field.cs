@@ -28,9 +28,10 @@ public partial class Match3Field : MonoBehaviour
     public SpriteRenderer[] masks;
     public SpriteRenderer fadePrefab;
     public Vector2 maskSizeOffset;
-    public int gridSizeOffset = 5;
     public int maxStepsCount = 20;
+    public ParticleSystem fx;
 
+    private Vector2Int gridSizeOffset;
     private SpriteRenderer[] fades = new SpriteRenderer[4];
     private bool isGridAnimating;
     private GameObject fieldParent;
@@ -66,11 +67,13 @@ public partial class Match3Field : MonoBehaviour
         Match3Window.Show();
         Steps = 0;
         realGridSize = gridSize;
-        gridSize.x += gridSizeOffset * 2;
-        gridSize.y += gridSizeOffset * 2;
+        gridSizeOffset = gridSize;
+        gridSizeOffset -= Vector2Int.one;
+        gridSize.x += gridSizeOffset.x * 2;
+        gridSize.y += gridSizeOffset.y * 2;
         
         fullGrid = new SpriteRenderer[gridSize.x, gridSize.y];
-        grid = fullGrid.ToSpan(gridSizeOffset..(gridSize.x - gridSizeOffset), gridSizeOffset..(gridSize.y - gridSizeOffset));
+        grid = fullGrid.ToSpan(gridSizeOffset.x..(gridSize.x - gridSizeOffset.x), gridSizeOffset.y..(gridSize.y - gridSizeOffset.y));
 
         
         InitField();
@@ -177,39 +180,39 @@ public partial class Match3Field : MonoBehaviour
             fades[i] = fade;
         }
         
-        var draggers = new List<SwipeArea>();
+        var swipeAreas = new List<SwipeArea>();
         
-        for (var x = gridSizeOffset; x < fullGrid.GetLength(0) - gridSizeOffset; x++)
+        for (var x = gridSizeOffset.x; x < fullGrid.GetLength(0) - gridSizeOffset.x; x++)
         {
             var go = new GameObject($"Dragger Vertical {x}");
             var boxCollider = go.AddComponent<BoxCollider2D>();
-            var dragger = go.AddComponent<SwipeArea>();
-            draggers.Add(dragger);
-            dragger.transform.SetParent(transform);
-            dragger.transform.localPosition = Vector3.zero;
-            dragger.index = x;
-            dragger.isVertical = true;
+            var swipeArea = go.AddComponent<SwipeArea>();
+            swipeAreas.Add(swipeArea);
+            swipeArea.transform.SetParent(transform);
+            swipeArea.transform.localPosition = Vector3.zero;
+            swipeArea.index = x;
+            swipeArea.isVertical = true;
             
             boxCollider.size = new Vector2(1, realGridSize.y);
-            boxCollider.offset = new Vector3(x, realGridSize.y / 2f - 0.5f + gridSizeOffset);
+            boxCollider.offset = new Vector3(x, realGridSize.y / 2f - 0.5f + gridSizeOffset.y);
         }
         
-        for (var y = gridSizeOffset; y < fullGrid.GetLength(1) - gridSizeOffset; y++)
+        for (var y = gridSizeOffset.y; y < fullGrid.GetLength(1) - gridSizeOffset.y; y++)
         {
             var go = new GameObject($"Dragger Horizontal {y}");
             var boxCollider = go.AddComponent<BoxCollider2D>();
-            var dragger = go.AddComponent<SwipeArea>();
-            draggers.Add(dragger);
-            dragger.transform.SetParent(transform);
-            dragger.transform.localPosition = Vector3.zero;
-            dragger.index = y;
-            dragger.isVertical = false;
+            var swipeArea = go.AddComponent<SwipeArea>();
+            swipeAreas.Add(swipeArea);
+            swipeArea.transform.SetParent(transform);
+            swipeArea.transform.localPosition = Vector3.zero;
+            swipeArea.index = y;
+            swipeArea.isVertical = false;
             
             boxCollider.size = new Vector2(realGridSize.x, 1);
-            boxCollider.offset = new Vector3(realGridSize.x / 2f - 0.5f + gridSizeOffset, y);
+            boxCollider.offset = new Vector3(realGridSize.x / 2f - 0.5f + gridSizeOffset.x, y);
         }
         
-        foreach (var dragger in draggers)
+        foreach (var dragger in swipeAreas)
         {
             dragger.Dragging += OnDragging;
             dragger.Swiped += OnEnd;
@@ -227,11 +230,11 @@ public partial class Match3Field : MonoBehaviour
             
             if (direction is SwipeArea.SwipeDirection.Up or SwipeArea.SwipeDirection.Down)
             {
-                DragVertical(index, ElasticClamp(delta));
+                DragVertical(index, delta);
             }
             else
             {
-                DragHorizontal(index, ElasticClamp(delta));
+                DragHorizontal(index, delta);
             }
             Vector2 ElasticClamp(Vector2 value)
             {
@@ -267,51 +270,35 @@ public partial class Match3Field : MonoBehaviour
             if(currentDragger != default && currentDragger != data) return;
             
             isGridAnimating = true;
-            endTween = OnEndAnim(index, delta);
+            Swipe(index, ref delta);
             
-            if (endTween == null)
+            if (direction is SwipeArea.SwipeDirection.Up or SwipeArea.SwipeDirection.Down)
             {
-                delta = GetWorldDelta(delta);
-            
-                if (direction is SwipeArea.SwipeDirection.Up or SwipeArea.SwipeDirection.Down)
+                endTween = Wait.InverseRun(0.3f, x =>
                 {
-                    endTween = Wait.InverseRun(0.3f, x =>
-                    {
-                        DragVertical(index, delta * x);
-                    }).SetEase(Ease.InOutSine);
-                }
-                else
-                {
-                    endTween = Wait.InverseRun(0.3f, x =>
-                    {
-                        DragHorizontal(index, delta * x);
-                    }).SetEase(Ease.InOutSine);
-                }
-                
-                endTween.onComplete += () =>
-                {
-                    currentDragger = default;
-                    isGridAnimating = false;
-                };
+                    DragVertical(index, delta * x);
+                }).SetEase(Ease.InOutSine);
             }
+            else
+            {
+                endTween = Wait.InverseRun(0.3f, x =>
+                {
+                    DragHorizontal(index, delta * x);
+                }).SetEase(Ease.InOutSine);
+            }
+                
+            endTween.onComplete += CheckAndDestroyChips;
         }
 
-        Tween OnEndAnim(int index, Vector2 delta)
+        void Swipe(int index, ref Vector2 delta)
         {
             delta = GetWorldDelta(delta);
-            if (Mathf.Abs(delta.x) < 0.5f && Mathf.Abs(delta.y) < 0.5f) return null;
-            
-            Tween tween = null;
+            if (Mathf.Abs(delta.x) < 0.5f && Mathf.Abs(delta.y) < 0.5f) return;
 
-            if (delta.x > 0) tween = SwipeHorizontal(index, true);
-            if (delta.x < 0) tween = SwipeHorizontal(index, false);
-            if (delta.y > 0) tween = SwipeVertical(index, true);
-            if (delta.y < 0) tween = SwipeVertical(index, false);
+            if (delta.x != 0) SwipeHorizontal(index, ref delta);
+            if (delta.y != 0) SwipeVertical(index, ref delta);
 
             Steps++;
-            tween.OnComplete(CheckAndDestroyChips);
-            
-            return tween;
         }
     }
 
@@ -359,7 +346,17 @@ public partial class Match3Field : MonoBehaviour
 
         async Task Dest()
         {
-            foreach (var set in sets)
+            if(sets.Count == 0) return;
+            
+            for (var i = 0; i < sets.Count - 1; i++)
+            {
+                Des(sets[i]);   
+                await Task.Delay(500);
+            }
+            
+            Des(sets[^1]);
+            
+            void Des(HashSet<Vector2Int> set)
             {
                 if (set.Count > 0)
                 {
@@ -371,12 +368,11 @@ public partial class Match3Field : MonoBehaviour
                         {
                             goal.Count++;
                         }
-            
+
+                        Instantiate(fx, target.transform.position, Quaternion.identity);
                         Destroy(target.gameObject);
                         grid[index.x, index.y] = null;
                     }
-                    
-                    await Task.Delay(500);
                 }
             }
         }

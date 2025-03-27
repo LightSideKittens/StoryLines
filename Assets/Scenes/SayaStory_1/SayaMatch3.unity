@@ -470,8 +470,8 @@ MonoBehaviour:
   - {fileID: 183564724}
   fadePrefab: {fileID: 3097468775311265413, guid: 5fab2a19db17cc140a4c49b309b45c66, type: 3}
   maskSizeOffset: {x: 0.08, y: 0.1}
-  gridSizeOffset: 5
-  pointsToWin: 130
+  maxStepsCount: 20
+  fx: {fileID: 3669460940760782086, guid: 12dc10fe69500cf4aa23f7dafebc4025, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
