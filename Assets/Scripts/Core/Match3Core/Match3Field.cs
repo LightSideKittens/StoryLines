@@ -372,7 +372,7 @@ public partial class Match3Field : MonoBehaviour
                         
             if (expandSequence != null)
             {
-                fade = expandSequence.isBackwards ? 0.15f : 0;
+                fade = expandSequence.isBackwards ? 0 : 0.15f;
             }
                         
             fullGrid[pos.x, pos.y].DOFade(fade, 0.3f);
